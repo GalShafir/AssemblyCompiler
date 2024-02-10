@@ -1,3 +1,7 @@
+#ifndef _GLOBAL_DEFINITION_H
+#define _GLOBAL_DEFINITION_H
+
+
 /* ------------------------------------ Static Definitions ------------------------------------ */
 
 
@@ -22,3 +26,15 @@ typedef enum booleans {
 
 #define EXECUTION_FORMAT_ERROR "Error while executing the program. Invalid format."
 #define FILE_OPEN_ERROR "Error while opening the file."
+#define MEMORY_ALLOCATION_ERROR "Error while allocating memory."
+
+
+
+
+
+
+
+
+
+
+#endif

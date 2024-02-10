@@ -7,17 +7,12 @@
 
 int compile(char * fileName){
 
-    FILE *file = NULL;
-
-    /* Open the file for reading */    
-    file = openFile(fileName);
-
-    if (file == NULL) {
-        return EXIT_FAILURE;
-    }
 
     /* Pre-process the file */
-    preProcessFile(file);
+    preProcessFile(fileName);
+
+
+
 
     return EXIT_SUCCESS;
 }
