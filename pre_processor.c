@@ -3,21 +3,8 @@
 #include <string.h>
 #include "pre_processor.h"
 #include "global_definitions.h"
+#include "utility_functions.h"
 
-
-FILE* openFile(const char * fileName, const char * accessMode) {
-    
-    FILE *file = NULL;
-
-    /* Open the file for reading and check for errors */
-    file = fopen(fileName, accessMode);
-    if (file == NULL) {
-        perror(FILE_OPEN_ERROR);
-        return NULL;
-    }
-
-    return file;
-}
 
 int preProcessFile(char * fileName) {
     
@@ -35,6 +22,7 @@ int preProcessFile(char * fileName) {
  *
  * @param inputFileName - Name of the input assembly file.
  */
+
 void processMacros(const char *inputFileName) {
 
     char line[MAX_LINE_LENGTH];             /* Buffer to store each line from the file */
@@ -42,6 +30,11 @@ void processMacros(const char *inputFileName) {
     int macroCount = 0;                     /* Count of detected macros */
     int i;                                  /* Loop counter */
     size_t contentLen;                      /* Length of the macro content */
+    char ** splitedMacro;                   /* Array to store the splited macro */
+    char ** splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;               /* Number of elements in the splited line */
+    bool holdWriting = False;               /* Flag to hold the writing of the line */
+    bool isMacroCall = False;               /* Flag to check if the line contains a macro call */
     Macro *macros = NULL;                   /* Array to store information about macros */
     FILE *inputFile = NULL;                 /* File pointer for the input file */
     FILE *outputFile = NULL;                /* File pointer for the output file */
@@ -63,7 +56,13 @@ void processMacros(const char *inputFileName) {
         /* Check if the line contains a macro definition */
         if (strstr(line, "mcr") != NULL) {
             /* Extract the macro name */
-            sscanf(line, "mcr %s", macros[macroCount].name);
+            splitedMacro = splitString(line, " ", &numberOfElements);
+
+            /* copy the macro name to the macros structure */
+            strcpy(macros[macroCount].name, splitedMacro[1]);
+
+            /* Free the memory allocated for the splitedMacro */
+            freeStringArray(splitedMacro, numberOfElements);
 
             /* Initialize content with an empty string */
             macros[macroCount].content = malloc(1);
@@ -101,7 +100,7 @@ void processMacros(const char *inputFileName) {
 
     /* Close the input file */
     fclose(inputFile);
-
+    /* printMacros(macros, 1); */
     /* Open a new file with the same name but a ".am" extension for writing */
     sprintf(outputFileName, "%s.am", removeFileExtension(inputFileName));
     outputFile = openFile(outputFileName, "w");
@@ -111,19 +110,46 @@ void processMacros(const char *inputFileName) {
 
     /* Process the input file, replacing macro calls with macro content */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
+
+        /* Reset the elemnts number - for the string spliter counter */
+        numberOfElements = 0;
+
         /* Check if the line contains a macro call */
+        splitedLine = splitString(line, " ", &numberOfElements);
+
+        /* Remove the white spaces from the first element */
+        removeWhiteSpaces(splitedLine[0]);
+
+        /* Check if the line contains a macro definition or endmcr */
+        if (strcmp(splitedLine[0], "mcr") == 0) {
+            holdWriting = True;
+        }
+
+        /* Check if the line contains a macro ending */
+        else if (strcmp(splitedLine[0], "endmcr") == 0) {
+            holdWriting = False;
+        }
+
         for (i = 0; i < macroCount; i++) {
-            if (strstr(line, macros[i].name) != NULL) {
+            /* Check if the line contains a macro call but is not a macro definition or endmcr */
+            if ((strstr(line, macros[i].name) != NULL) && (strcmp(splitedLine[0], "mcr") != 0) && (strcmp(splitedLine[0], "endmcr") != 0)){
                 /* Replace the macro call with the macro content */
                 fputs(macros[i].content, outputFile);
+                isMacroCall = True;
                 break;  /* Skip the original macro call line */
             }
         }
 
-        /* Print the line as it is if it doesn't contain a macro call or is within a macro definition */
-        if (strstr(line, "mcr") == NULL && strstr(line, "endmcr") == NULL) {
+        /* Print the line as it is if it doesn't contain a macro call or is within a macro definition or endmcr */
+        if (holdWriting == False && strcmp(splitedLine[0], "endmcr") != 0 && isMacroCall == False) {
             fputs(line, outputFile);
         }
+
+        /* Reset the isMacroCall flag */
+        isMacroCall = False;
+
+        /* Free the memory allocated for the splitedLine */
+        freeStringArray(splitedLine, numberOfElements);
     }
 
     /* Close the input and output files */
@@ -138,62 +164,24 @@ void processMacros(const char *inputFileName) {
     free(macros);
 }
 
-
 /**
- * Remove File Extension from the Input File Name
+ * Print Detected Macros
  *
- * This function takes an input file name and removes the file extension (if exists).
- * It returns a new dynamically allocated string containing the modified file name.
+ * This function prints the names and contents of the detected macros.
  *
- * @param inputFileName - The input file name to process.
- * @return char* - A dynamically allocated string containing the file name without the extension.
+ * @param macros - Array of macros to print.
+ * @param macroCount - Number of macros in the array.
  */
-char *removeFileExtension(const char *inputFileName) {
 
-    const char *dotPosition;
-    size_t length;
-    char *outputFileName;
-
-    /* Find the last occurrence of '.' in the input file name */
-    dotPosition = strrchr(inputFileName, '.');
-    if (dotPosition != NULL) {
-        /* Calculate the length of the file name without the extension */
-        size_t length = dotPosition - inputFileName;
-
-        /* Allocate memory for the new string */
-        outputFileName = (char *)malloc(length + 1);
-
-        /* Check for memory allocation errors */
-        if (outputFileName == NULL) {
-            perror(MEMORY_ALLOCATION_ERROR);
-            exit(EXIT_FAILURE);
-        }
-
-        /* Copy the file name without the extension */
-        strncpy(outputFileName, inputFileName, length);
-
-        /* Null-terminate the string */
-        outputFileName[length] = '\0';
-
-        return outputFileName;
-    } else {
-        /* No dot found, return a copy of the entire input file name */
-        length = strlen(inputFileName);
-
-        /* Allocate memory for the new string */
-        outputFileName = (char *)malloc(length + 1);
-
-        /* Check for memory allocation errors */
-        if (outputFileName == NULL) {
-            perror(MEMORY_ALLOCATION_ERROR);
-            exit(EXIT_FAILURE);
-        }
-
-        /* Copy the entire input file name */
-        strcpy(outputFileName, inputFileName);
-
-        return outputFileName;
+void printMacros(const Macro *macros, int macroCount) {
+    int i;
+    printf("Detected Macros:\n");
+    for (i = 0; i < macroCount; i++) {
+        printf("Macro Name: %s\n", macros[i].name);
+        printf("Macro Content:\n%s\n", macros[i].content);
+        printf("------------------------------\n");
     }
 }
+
 
 

@@ -17,8 +17,8 @@
 
 /* Defines a boolean type (T/F) */
 typedef enum booleans {
-    FALSE = 0,
-    TRUE = 1
+    False = 0,
+    True = 1
 } bool;
 
 

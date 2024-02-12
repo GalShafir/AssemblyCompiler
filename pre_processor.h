@@ -17,9 +17,8 @@ typedef struct {
 /* ------------------------------------ Functions ------------------------------------ */
 
 
-FILE* openFile(const char * fileName, const char * accessMode);
-char *removeFileExtension(const char *inputFileName);
 void processMacros(const char *inputFileName);
 int preProcessFile(char * fileName);
+void printMacros(const Macro *macros, int macroCount);
 
 
