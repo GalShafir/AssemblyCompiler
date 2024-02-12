@@ -100,7 +100,7 @@ void processMacros(const char *inputFileName) {
 
     /* Close the input file */
     fclose(inputFile);
-    /* printMacros(macros, 1); */
+
     /* Open a new file with the same name but a ".am" extension for writing */
     sprintf(outputFileName, "%s.am", removeFileExtension(inputFileName));
     outputFile = openFile(outputFileName, "w");
