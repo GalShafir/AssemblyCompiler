@@ -10,6 +10,7 @@ LOOP:       jmp W
                 cmp r3, #sz
             bne END
             endmcr
+            ; A comment
             sub r1, r4
             cmp K, #sz
             mcr nana
@@ -18,7 +19,10 @@ LOOP:       jmp W
             endmcr
             m_mcr
             nana
+            ; The next line is empty comment
+
             bne W
+            
             nana
 L1: inc L3
 .entry LOOP

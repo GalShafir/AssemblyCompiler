@@ -23,6 +23,9 @@ L1: inc L3
 .entry LOOP
             bne LOOP
 END:        hlt
+.data 1,-2,+3
+.data 1,5,,6
+.string "abc"
 
 .define len = 4
 STR:        .string “abcdef”
