@@ -33,6 +33,7 @@ void removeWhiteSpaces(char *inputString);
 char **splitString(const char *inputString, const char *separators, int *count);
 void freeStringArray(char **splittedStrings, int count);
 void printStringArray(char **strings, int count);
+void removeSubstring(char *str, const char *subStr);
 LinkedList *allocate_list();
 LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item);
 Ht_item *linkedlist_remove(LinkedList *list);

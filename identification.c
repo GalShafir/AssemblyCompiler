@@ -159,20 +159,28 @@ bool hasLabel(char *line) {
     return False;
 }
 
+void removeLabel(char *line) {
+    while (*line) {
+        if (*line == ':') {
+            *line = '\0';
+            break;
+        }
+        line++;
+    }
+}
+
 bool isInstruction(char *line, HashTable* instructionsHash) {
 
     char instruction[MAX_LINE_LENGTH];
     char ** splitedLine;                    /* Array to store the splited line */
-    int numberOfElements = 0;
+    int numberOfElements = 0;               /* Reset the elemnts number - for the string spliter counter */
+
 
     /* Skip leading whitespaces */
     while (*line && (*line == ' ' || *line == '\t')) {
         line++;
     }
 
-    /* Reset the elemnts number - for the string spliter counter */
-
-    /* Check if the line contains a macro call */
     splitedLine = splitString(line, " ", &numberOfElements);
 
     /* Check for a label */
@@ -204,6 +212,50 @@ CommandType identifyInstruction(char *line, HashTable* instructionsHash){
 
 }
 
+bool isConstant(char *line) {
+
+    char constant[MAX_LINE_LENGTH];
+    int i = 0;
+
+    /* Skip leading whitespaces */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    /* Check for a label */
+    while (*line) {
+        if (*line == ':') {
+            line++;  /* Skip the colon */
+            break;
+        } else if (*line == ' ' || *line == '\t' || *line == '.') {
+            break;  /* End of label, no colon found */
+        }
+        line++;
+    }
+
+    /* Skip whitespaces after the label */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    /* Check for constant starting with '.' */
+    if (*line == '.') {
+        /* Extract the constant name */
+        line++;  /* Skip the '.' */
+        while (*line && (*line != ' ' && *line != '\t' && *line != '\n')) {
+            constant[i++] = *line++;
+        }
+        constant[i] = '\0';
+
+        /* Compare constant name */
+        if (strcmp(constant, "define") == 0) {
+            return True;
+        }
+    }
+
+    return False;
+}
+
 
 CommandType identifyCommandType(char *line, HashTable* instructionsHash) {
 
@@ -217,6 +269,8 @@ CommandType identifyCommandType(char *line, HashTable* instructionsHash) {
         return COMMENT;
     } else if (isDirective(line)) {
         return identifyDirective(line);
+    }  else if (isConstant(line)) {
+        return CONSTANT;
     } else if (isInstruction(line, instructionsHash)) {
         return INSTRUCTION;
     } else {

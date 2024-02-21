@@ -1,19 +1,7 @@
-
-
-typedef enum error_type {
-    INVALID_COMMAND,
-    INVALID_MAT,
-    MISSING_MAT,
-    ILLEGAL_NUMBER,
-    MISSING_NUMBER,
-    ILLEGAL_ENDING,
-    MULTIPLE_COMMAS,
-    MISSING_COMMA,
-    ILLEGAL_COMMA,
-    MISSING_WHITE,
-    ILLEGAL_CHAR,
-    ILLEGAL_LINE_LEN,
-    ILLEGAL_EXIT,
-    NULL_ARGUMENT,
-    NO_ERROR
-} Error;
+void check_errors(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash);
+void print_error(char *error, const char *line);
+bool hasSomethingAfterSection(const char *input, const char *section);
+bool isValidInteger(const char *str);
+bool checkCommas(const char* line, const char* originalLine);
+void check_constant_error(char *line, HashTable *symbolsLabelsValuesHash);
+void check_data_directive_error(char * line, HashTable *symbolsLabelsValuesHash);

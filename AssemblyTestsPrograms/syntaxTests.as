@@ -28,7 +28,7 @@ L1: inc L3
 .entry LOOP
             bne LOOP
 END:        hlt
-.data 1,-2,+3
+.data ,1,-2,+3
 .data 1,5,,6
 .string "abc"
 
@@ -36,4 +36,30 @@ END:        hlt
 STR:        .string “abcdef”
 LIST:       .data 6, -9, len
 K:          .data 22
+            .data 30,-50
+            .data       1,2,3,
+
+TTT:        .data
+.data       
+.data           t       
+    .data
+.data       1,2,3,
+A: B: .data 5,6
+.define a = 5
+    .define aaa=+6
+        .define b     =     -6
+.define d = 4
+.define len = 4
+.define
+.define c  = -600001
+.define sz = 100
+.data 1,2,3
+AAA:    .data      1,-2,3
+BBB:     .data      1,a,c
+.data ,1,2
+.data 1,,2
+.data 1,a,2
+.data 1,-2,
+AAA: .data 1
+CCC: .data 1
 .extern L3 

@@ -242,6 +242,7 @@ void freeStringArray(char **splittedStrings, int count) {
     free(splittedStrings);
 }
 
+
 /**
  * Print the array of strings.
  *
@@ -250,12 +251,41 @@ void freeStringArray(char **splittedStrings, int count) {
  */
 void printStringArray(char **strings, int count) {
     int i = 0;
-    printf("String Array:\n");
+
+    printf("\nString Array:\n");
+    printf("-------------------\n");
 
     for (i = 0; i < count; i++) {
         printf("%s\n", strings[i]);
     }
+
+    printf("-------------------\n");
+
 }
+
+/**
+ * removeSubstring - Remove a specified substring from a given string
+ * @param str - The input string
+ * @param subStr - The substring to be removed
+ */
+void removeSubstring(char *str, const char *subStr) {
+    /* Find the first occurrence of the substring in the string */
+    char *found = strstr(str, subStr);
+
+    /* If the substring is found */
+    while (found != NULL) {
+        /* Calculate the length of the substring */
+        size_t subStrLen = strlen(subStr);
+
+        /* Move characters following the substring to overwrite it */
+        memmove(found, found + subStrLen, strlen(found + subStrLen) + 1);
+
+        /* Search for the next occurrence of the substring */
+        found = strstr(str, subStr);
+    }
+}
+
+
 
 
 unsigned long hash_function(char *str)

@@ -23,7 +23,7 @@ int preProcessFile(char * fileName) {
  * @param inputFileName - Name of the input assembly file.
  */
 
-void processMacros(const char *inputFileName) {
+void processMacros(char *inputFileName) {
 
     char line[MAX_LINE_LENGTH];             /* Buffer to store each line from the file */
     char outputFileName[MAX_LINE_LENGTH];   /* Buffer to store the output file name */
@@ -38,6 +38,10 @@ void processMacros(const char *inputFileName) {
     Macro *macros = NULL;                   /* Array to store information about macros */
     FILE *inputFile = NULL;                 /* File pointer for the input file */
     FILE *outputFile = NULL;                /* File pointer for the output file */
+
+
+    /* Add the ".as" extension to the input file name */
+    sprintf(inputFileName, "%s.as", inputFileName);
 
     /* Open the input file */
     inputFile = openFile(inputFileName, "r");

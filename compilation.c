@@ -5,13 +5,17 @@
 #include "global_definitions.h"
 #include "compilation.h"
 #include "identification.h"
+#include "error_handling.h"
 
 int compile(char * fileName){
 
     char PreProcessedFileName[MAX_LINE_LENGTH];   /* Buffer to store the output file name of the pre-processed file */
 
-    HashTable *instructionsHash = create_table(HT_CAPACITY);
-
+    /**
+    HashTable *instructionsHash        = create_table(HT_CAPACITY);
+    HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY);
+    HashTable *symbolsLabelsMemoryHash = create_table(HT_CAPACITY);
+    */
 
     /* Pre-process the file */
     preProcessFile(fileName);
@@ -23,11 +27,6 @@ int compile(char * fileName){
     processFile(PreProcessedFileName);
 
 
-    /* Create the instruction table */
-    createInstructionTable(instructionsHash);
-    print_table(instructionsHash);
-    free_table(instructionsHash);
-
 
     return EXIT_SUCCESS;
 }
@@ -38,8 +37,9 @@ void processFile(char *inputFileName) {
     FILE *inputFile = NULL;                 /* File pointer for the input file */
     CommandType commandType;                /* Type of the command in the line */
 
-    /* Create the instruction table */
-    HashTable *instructionsHash = create_table(HT_CAPACITY);
+    
+    HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
+    HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
 
     createInstructionTable(instructionsHash);
 
@@ -50,39 +50,19 @@ void processFile(char *inputFileName) {
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         /* Identify the command type */
         commandType = identifyCommandType(line, instructionsHash);
-        switch (commandType) {
-            case EMPTY:
-                printf("empty line\n");
-                break;
-            case COMMENT:
-                printf("comment line\n");
-                break;
-            case DATA_DIRECTIVE:
-                printf("data directive line\n");
-                break;
-            case STRING_DIRECTIVE:
-                printf("string directive line\n");
-                break;
-            case ENTRY_DIRECTIVE:
-                printf("entry directive line\n");
-                break;
-            case EXTERN_DIRECTIVE:
-                printf("extern directive line\n");
-                break;
-            case UNDEFINED_DIRECTIVE:
-                printf("undifined directive line\n");
-                break;
-            case INSTRUCTION:
-                printf("Instruction\n");
-                break;
-            case UNDEFINED:
-                printf("undefined line\n");
-                break;
-        }
+        check_errors(commandType, line, symbolsLabelsValuesHash);
     }
+
+    print_table(symbolsLabelsValuesHash);
+
+    free_table(instructionsHash);
+    free_table(symbolsLabelsValuesHash);
 
     /* Close the input file */
     fclose(inputFile);
+
+
+
 }
 
 /** Create the Instruction Table

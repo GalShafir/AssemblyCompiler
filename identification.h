@@ -7,7 +7,8 @@ typedef enum CommandType {
     ENTRY_DIRECTIVE,
     EXTERN_DIRECTIVE,
     UNDEFINED_DIRECTIVE,
-    INSTRUCTION
+    INSTRUCTION,
+    CONSTANT
 
 } CommandType;
 
@@ -37,4 +38,6 @@ bool isEmpty(char *line);
 void cleanCommand(char *line);
 bool isDirective(char *line);
 CommandType identifyDirective(char *line);
+bool isConstant(char *line);
 bool hasLabel(char *line);
+void removeLabel(char *line);

@@ -5,7 +5,7 @@
 
 CC = gcc
 CFLAGS = -Wall -ansi -g -pedantic
-OBJECT_LIST = assembler.o compilation.o pre_processor.o utility_functions.o identification.o
+OBJECT_LIST = assembler.o compilation.o pre_processor.o utility_functions.o identification.o error_handling.o
 GLOBAL_HELPER = global_definitions.h
 
 
@@ -28,6 +28,9 @@ utility_functions.o: utility_functions.c utility_functions.h $(GLOBAL_HELPER)
 
 identification.o: identification.c identification.h $(GLOBAL_HELPER)
 	$(CC) $(CFLAGS) -c identification.c -o $@
+
+error_handling.o: error_handling.c error_handling.h $(GLOBAL_HELPER)
+	$(CC) $(CFLAGS) -c error_handling.c -o $@
 
 clean:
 	rm -f assembler *.o *.am *.ob *.ent *.ext 
