@@ -196,6 +196,11 @@ void check_constant_error(char *line, HashTable *symbolsLabelsValuesHash) {
         return;
     }
 
+    if (hasLabel(line)) {
+        print_error(".define instruction cannot have a lablel before it\n", originalLine);
+        return;
+    }
+
     /* print line */
     printf("Line before removal: %s\n", line);
     removeSubstring(line, ".define");

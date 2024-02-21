@@ -57,4 +57,5 @@ BBB:     .data      1,a,c
 .data 1,-2,
 AAA: .data 1
 CCC: .data 1
+QQQ: .define 4 = 3
 .extern L3 
