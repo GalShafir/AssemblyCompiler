@@ -7,7 +7,6 @@
 
 
 int preProcessFile(char * fileName) {
-    
     printf("Pre-processing file %s...\n", fileName);
     processMacros(fileName);
     return 0;
@@ -39,9 +38,6 @@ void processMacros(char *inputFileName) {
     FILE *inputFile = NULL;                 /* File pointer for the input file */
     FILE *outputFile = NULL;                /* File pointer for the output file */
 
-
-    /* Add the ".as" extension to the input file name */
-    sprintf(inputFileName, "%s.as", inputFileName);
 
     /* Open the input file */
     inputFile = openFile(inputFileName, "r");

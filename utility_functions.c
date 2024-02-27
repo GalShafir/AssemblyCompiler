@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "global_definitions.h"
 #include "utility_functions.h"
 
@@ -20,6 +21,7 @@ FILE* openFile(const char * fileName, const char * accessMode) {
     FILE *file = NULL;
 
     /* Open the file for reading and check for errors */
+
     file = fopen(fileName, accessMode);
     if (file == NULL) {
         perror(FILE_OPEN_ERROR);
@@ -112,6 +114,33 @@ void removeWhiteSpaces(char *inputString) {
     inputString[j] = '\0';
 }
 
+/**
+ * Remove Leading Spaces from the Input String
+ * @param str - The input string to be modified.
+ */
+void removeLeadingSpaces(char *str) {
+
+    int i = 0;
+    int j = 0;
+
+    if (str == NULL || str[0] == '\0') {
+        /* Handle invalid or empty string */
+        return;
+    }
+
+    /* Skip leading spaces or tabs */
+    while (isspace(str[i])) {
+        i++;
+    }
+
+    /* Move non-space characters to the beginning of the string */
+    while (str[i] != '\0') {
+        str[j++] = str[i++];
+    }
+
+    /* Null-terminate the modified string */
+    str[j] = '\0';
+}
 
 
 /**
@@ -284,6 +313,26 @@ void removeSubstring(char *str, const char *subStr) {
         found = strstr(str, subStr);
     }
 }
+/**
+ * removeLastCharacter - Remove the last character from a given string
+ * @param str - The input string
+ */
+void removeLastCharacter(char *str) {
+    size_t length = strlen(str);
+
+    if (str == NULL || str[0] == '\0') {
+        /* Handle invalid or empty string */
+        return;
+    }
+
+
+    /* Check if the string has at least one character */
+    if (length > 0) {
+        /* Replace the last character with the null terminator */
+        str[length - 1] = '\0';
+    }
+}
+
 
 
 
@@ -642,6 +691,20 @@ void print_search(HashTable *table, char *key)
     else
     {
         printf("Key:%s, Value:%s\n", key, val);
+    }
+}
+
+char * return_search(HashTable *table, char *key)
+{
+    char *val;
+
+    if ((val = ht_search(table, key)) == NULL)
+    {
+        return "Empty";
+    }
+    else
+    {
+        return "Value";
     }
 }
 

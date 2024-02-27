@@ -9,7 +9,9 @@
 #define EXIT_SUCCESS 0
 
 #define MAX_LINE_LENGTH 81
-#define MAX_LABEL_LENGTH 31
+
+/* The max length in 31 but in order to include /0 we set it to 32*/
+#define MAX_LABEL_LENGTH 32
 
 /* Size of the HashTable. Determines the number of slots or buckets in the hash table. Not the actual memory consumption */
 #define HT_CAPACITY 50000

@@ -28,7 +28,7 @@ END:        hlt
 .string "abc"
 
 .define len = 4
-STR:        .string “abcdef”
+STR:        .string "abcdef"
 LIST:       .data 6, -9, len
 K:          .data 22
             .data 30,-50
@@ -58,4 +58,12 @@ BBB:     .data      1,a,c
 AAA: .data 1
 CCC: .data 1
 QQQ: .define 4 = 3
+EEE: .data 1,-2,+3,     
+AAA: .string "abc"
+    .string "   d   de"
+RRR:            .string         "a1b2"
+XXX: .string fff
+.string "aaa
+.string bbb"
+
 .extern L3 
