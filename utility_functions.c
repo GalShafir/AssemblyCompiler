@@ -416,6 +416,9 @@ Ht_item *linkedlist_remove(LinkedList *list)
     memcpy(temp->item, it, sizeof(Ht_item));
     free(temp->item->key);
     free(temp->item->value);
+    free(temp->item->type);
+    free(temp->item->address);
+    free(temp->item->memorySize);
     free(temp->item);
     free(temp);
     return it;
@@ -431,6 +434,9 @@ void free_linkedlist(LinkedList *list)
         list = list->next;
         free(temp->item->key);
         free(temp->item->value);
+        free(temp->item->type);
+        free(temp->item->address);
+        free(temp->item->memorySize);
         free(temp->item);
         free(temp);
     }
@@ -460,14 +466,20 @@ void free_overflow_buckets(HashTable *table)
     free(buckets);
 }
 
-Ht_item *create_item(char *key, char *value)
+Ht_item *create_item(char *key, char *value, char *type, char *address, char *memorySize)
 {
     /* Creates a pointer to a new HashTable item. */
     Ht_item *item = (Ht_item *)malloc(sizeof(Ht_item));
     item->key = (char *)malloc(strlen(key) + 1);
     item->value = (char *)malloc(strlen(value) + 1);
+    item->type = (char *)malloc(strlen(type) + 1);
+    item->address = (char *)malloc(strlen(address) + 1);
+    item->memorySize = (char *)malloc(strlen(memorySize) + 1);
     strcpy(item->key, key);
     strcpy(item->value, value);
+    strcpy(item->type, type);
+    strcpy(item->address, address);
+    strcpy(item->memorySize, memorySize);
     return item;
 }
 
@@ -494,6 +506,9 @@ void free_item(Ht_item *item)
     /* Frees an item. */
     free(item->key);
     free(item->value);
+    free(item->type);
+    free(item->address);
+    free(item->memorySize);
     free(item);
 }
 
@@ -535,10 +550,10 @@ void handle_collision(HashTable *table, unsigned long index, Ht_item *item)
     }
 }
 
-void ht_insert(HashTable *table, char *key, char *value)
+void ht_insert(HashTable *table, char *key, char *value, char *type, char *address, char *memorySize)
 {
     /* Creates the item. */
-    Ht_item *item = create_item(key, value);
+    Ht_item *item = create_item(key, value, type, address, memorySize);
 
     /* Computes the index. */
     int index = hash_function(key);
@@ -566,6 +581,9 @@ void ht_insert(HashTable *table, char *key, char *value)
         if (strcmp(current_item->key, key) == 0)
         {
             strcpy(table->items[index]->value, value);
+            strcpy(table->items[index]->type, type);
+            strcpy(table->items[index]->address, address);
+            strcpy(table->items[index]->memorySize, memorySize);
             return;
         }
         else
@@ -600,6 +618,79 @@ char *ht_search(HashTable *table, char *key)
 
     return NULL;
 }
+
+char *ht_get_type(HashTable *table, char *key)
+{
+    /* Searches for the key in the HashTable.
+       Returns NULL if it doesn't exist. */
+    int index = hash_function(key);
+    Ht_item *item = table->items[index];
+    LinkedList *head = table->overflow_buckets[index];
+
+    /* Provide only non-NULL types. */
+    if (item != NULL)
+    {
+        if (strcmp(item->key, key) == 0)
+            return item->type;
+
+        if (head == NULL)
+            return NULL;
+
+        item = head->item;
+        head = head->next;
+    }
+
+    return NULL;
+}
+
+char *ht_get_memory_address(HashTable *table, char *key)
+{
+    /* Searches for the key in the HashTable.
+       Returns NULL if it doesn't exist. */
+    int index = hash_function(key);
+    Ht_item *item = table->items[index];
+    LinkedList *head = table->overflow_buckets[index];
+
+    /* Provide only non-NULL types. */
+    if (item != NULL)
+    {
+        if (strcmp(item->key, key) == 0)
+            return item->address;
+
+        if (head == NULL)
+            return NULL;
+
+        item = head->item;
+        head = head->next;
+    }
+
+    return NULL;
+}
+
+char *ht_get_memory_size(HashTable *table, char *key)
+{
+    /* Searches for the key in the HashTable.
+       Returns NULL if it doesn't exist. */
+    int index = hash_function(key);
+    Ht_item *item = table->items[index];
+    LinkedList *head = table->overflow_buckets[index];
+
+    /* Provide only non-NULL types. */
+    if (item != NULL)
+    {
+        if (strcmp(item->key, key) == 0)
+            return item->memorySize;
+
+        if (head == NULL)
+            return NULL;
+
+        item = head->item;
+        head = head->next;
+    }
+
+    return NULL;
+}
+
 
 void ht_delete(HashTable *table, char *key)
 {
@@ -640,7 +731,7 @@ void ht_delete(HashTable *table, char *key)
                 node = head;
                 head = head->next;
                 node->next = NULL;
-                table->items[index] = create_item(node->item->key, node->item->value);
+                table->items[index] = create_item(node->item->key, node->item->value, node->item->type, node->item->address, node->item->memorySize);
                 free_linkedlist(node);
                 table->overflow_buckets[index] = head;
                 return;
@@ -694,6 +785,51 @@ void print_search(HashTable *table, char *key)
     }
 }
 
+void print_type(HashTable *table, char *key)
+{
+    char *type;
+
+    if ((type = ht_get_type(table, key)) == NULL)
+    {
+        printf("Key:%s does not exist\n", key);
+        return;
+    }
+    else
+    {
+        printf("Key:%s, Type:%s\n", key, type);
+    }
+}
+
+void print_memory_address(HashTable *table, char *key)
+{
+    char *address;
+
+    if ((address = ht_get_memory_address(table, key)) == NULL)
+    {
+        printf("Key:%s does not exist\n", key);
+        return;
+    }
+    else
+    {
+        printf("Key:%s, Memory Address:%s\n", key, address);
+    }
+}
+
+void print_memory_size(HashTable *table, char *key)
+{
+    char *memorySize;
+
+    if ((memorySize = ht_get_memory_size(table, key)) == NULL)
+    {
+        printf("Key:%s does not exist\n", key);
+        return;
+    }
+    else
+    {
+        printf("Key:%s, Memory Size:%s\n", key, memorySize);
+    }
+}
+
 char * return_search(HashTable *table, char *key)
 {
     char *val;
@@ -729,7 +865,7 @@ void print_table(HashTable *table)
     {
         if (table -> items[i])
         {
-            printf("Index:%d, Key:%s, Value:%s\n", i, table -> items[i] -> key, table -> items[i] -> value);
+            printf("Index:%d, Key:%s, Value:%s, Type:%s, Address:%s, Memory Size:%s\n", i, table -> items[i] -> key, table -> items[i] -> value, table -> items[i] -> type, table -> items[i] -> address, table -> items[i] -> memorySize);
         }
     }
 

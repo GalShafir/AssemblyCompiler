@@ -283,7 +283,7 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
         return;
     }
 
-    ht_insert(symbolsLabelsValuesHash, constantSplitedLine[0], constantSplitedLine[1]);
+    ht_insert(symbolsLabelsValuesHash, constantSplitedLine[0], constantSplitedLine[1], "constant", "0", "0");
 
     /* Free the memory allocated for the splitedLines */
     freeStringArray(constantSplitedLine, constantNumberOfElements);
@@ -398,7 +398,7 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
     
     if(hasLabel(originalLine)){
-        ht_insert(symbolsLabelsValuesHash, labelName, variableValue);
+        ht_insert(symbolsLabelsValuesHash, labelName, variableValue, "dataDirective", "0", "0");
     }
     
 
@@ -488,7 +488,7 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
     if(hasLabel(originalLine)){
         removeLeadingSpaces(value);
-        ht_insert(symbolsLabelsValuesHash, labelName, value);
+        ht_insert(symbolsLabelsValuesHash, labelName, value, "stringDirective", "0", "0");
     }
 
     freeStringArray(splitedLine, numberOfElements);

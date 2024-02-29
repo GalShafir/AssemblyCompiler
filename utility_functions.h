@@ -5,6 +5,10 @@ typedef struct Ht_item
 {
     char *key;
     char *value;
+    char *type;
+    char *address;
+    char *memorySize;
+
 } Ht_item;
 
 /* Defines the LinkedList. */
@@ -42,15 +46,21 @@ Ht_item *linkedlist_remove(LinkedList *list);
 void free_linkedlist(LinkedList *list);
 LinkedList **create_overflow_buckets(HashTable *table);
 void free_overflow_buckets(HashTable *table);
-Ht_item *create_item(char *key, char *value);
+Ht_item *create_item(char *key, char *value, char *type, char *address, char *memorySize);
 HashTable *create_table(int size);
 void free_item(Ht_item *item);
 void free_table(HashTable *table);
 void handle_collision(HashTable *table, unsigned long index, Ht_item *item);
-void ht_insert(HashTable *table, char *key, char *value);
+void ht_insert(HashTable *table, char *key, char *value, char *type, char *address, char *memorySize);
 char *ht_search(HashTable *table, char *key);
+char *ht_get_type(HashTable *table, char *key);
+char *ht_get_memory_address(HashTable *table, char *key);
+char *ht_get_memory_size(HashTable *table, char *key);
 void ht_delete(HashTable *table, char *key);
 void print_search(HashTable *table, char *key);
+void print_type(HashTable *table, char *key);
+void print_memory_address(HashTable *table, char *key);
+void print_memory_size(HashTable *table, char *key);
 char * return_search(HashTable *table, char *key);
 void print_table(HashTable *table);
 bool existsInHash(HashTable *table, char *key);

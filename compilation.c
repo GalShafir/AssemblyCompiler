@@ -102,21 +102,21 @@ void processFile(char *inputFileName) {
 
 void createInstructionTable(HashTable* mp){
 
-    ht_insert(mp, "mov", "0");
-    ht_insert(mp, "cmp", "1");
-    ht_insert(mp, "add", "2");
-    ht_insert(mp, "sub", "3");
-    ht_insert(mp, "not", "4");
-    ht_insert(mp, "clr", "5");
-    ht_insert(mp, "lea", "6");
-    ht_insert(mp, "inc", "7");
-    ht_insert(mp, "dec", "8");
-    ht_insert(mp, "jmp", "9");
-    ht_insert(mp, "bne", "10");
-    ht_insert(mp, "red", "11");
-    ht_insert(mp, "prn", "12");
-    ht_insert(mp, "jsr", "13");
-    ht_insert(mp, "rts", "14");
-    ht_insert(mp, "hlt", "15");
+    ht_insert(mp, "mov", "0", "instruction", "no address", "no size");
+    ht_insert(mp, "cmp", "1", "instruction", "no address", "no size");
+    ht_insert(mp, "add", "2", "instruction", "no address", "no size");
+    ht_insert(mp, "sub", "3", "instruction", "no address", "no size");
+    ht_insert(mp, "not", "4", "instruction", "no address", "no size");
+    ht_insert(mp, "clr", "5", "instruction", "no address", "no size");
+    ht_insert(mp, "lea", "6", "instruction", "no address", "no size");
+    ht_insert(mp, "inc", "7", "instruction", "no address", "no size");
+    ht_insert(mp, "dec", "8", "instruction", "no address", "no size");
+    ht_insert(mp, "jmp", "9", "instruction", "no address", "no size");
+    ht_insert(mp, "bne", "10", "instruction", "no address", "no size");
+    ht_insert(mp, "red", "11", "instruction", "no address", "no size");
+    ht_insert(mp, "prn", "12", "instruction", "no address", "no size");
+    ht_insert(mp, "jsr", "13", "instruction", "no address", "no size");
+    ht_insert(mp, "rts", "14", "instruction", "no address", "no size");
+    ht_insert(mp, "hlt", "15", "instruction", "no address", "no size");
 }
 
