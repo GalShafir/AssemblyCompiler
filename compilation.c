@@ -55,6 +55,7 @@ void processFile(char *inputFileName) {
     FILE *inputFile = NULL;                 /* File pointer for the input file */
     CommandType commandType;                /* Type of the command in the line */
     int lineNumber = 0;                    /* Counter for the line number */
+    int directiveOrder = 0;               /* Counter for the directive order */
     
     HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
     HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
@@ -78,13 +79,16 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash);
+        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder);
     }
 
     print_table(symbolsLabelsValuesHash);
 
+    print_directives_by_order(symbolsLabelsValuesHash);
+
     free_table(instructionsHash);
     free_table(symbolsLabelsValuesHash);
+
 
     /* Close the input file */
     fclose(inputFile);
@@ -102,21 +106,42 @@ void processFile(char *inputFileName) {
 
 void createInstructionTable(HashTable* mp){
 
-    ht_insert(mp, "mov", "0", "instruction", "no address", "no size");
-    ht_insert(mp, "cmp", "1", "instruction", "no address", "no size");
-    ht_insert(mp, "add", "2", "instruction", "no address", "no size");
-    ht_insert(mp, "sub", "3", "instruction", "no address", "no size");
-    ht_insert(mp, "not", "4", "instruction", "no address", "no size");
-    ht_insert(mp, "clr", "5", "instruction", "no address", "no size");
-    ht_insert(mp, "lea", "6", "instruction", "no address", "no size");
-    ht_insert(mp, "inc", "7", "instruction", "no address", "no size");
-    ht_insert(mp, "dec", "8", "instruction", "no address", "no size");
-    ht_insert(mp, "jmp", "9", "instruction", "no address", "no size");
-    ht_insert(mp, "bne", "10", "instruction", "no address", "no size");
-    ht_insert(mp, "red", "11", "instruction", "no address", "no size");
-    ht_insert(mp, "prn", "12", "instruction", "no address", "no size");
-    ht_insert(mp, "jsr", "13", "instruction", "no address", "no size");
-    ht_insert(mp, "rts", "14", "instruction", "no address", "no size");
-    ht_insert(mp, "hlt", "15", "instruction", "no address", "no size");
+    ht_insert(mp, "mov", "0",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "cmp", "1",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "add", "2",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "sub", "3",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "not", "4",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "clr", "5",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "lea", "6",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "inc", "7",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "dec", "8",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "jmp", "9",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "bne", "10", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "red", "11", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "prn", "12", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "jsr", "13", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "rts", "14", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "hlt", "15", "instruction", "no address", "no size", "no order");
+}
+
+void print_directives_by_order(HashTable *table)
+{
+    int i, j, order;
+    printf("\nDirectives Hash Table\n-------------------\n");
+    for (j = 0; j < table -> size; j++){
+
+        for (i = 0; i < table -> size; i++)
+        {
+            if ((table -> items[i]) && (table -> items[i] -> order != NULL)){
+                order = stringToInt(table -> items[i] -> order);
+                if (order == j && (strcmp(table -> items[i] -> type, "dataDirective") == 0 || strcmp(table -> items[i] -> type, "stringDirective") == 0))
+                {
+                    printf("Index:%d, Key:%s, Value:%s, Type:%s, Address:%s, Memory Size:%s, Order:%s\n", i, table -> items[i] -> key, table -> items[i] -> value, table -> items[i] -> type, table -> items[i] -> address, table -> items[i] -> memorySize, table -> items[i] -> order);
+                }
+            }
+        }
+    }
+
+    printf("-------------------\n\n");
 }
 

@@ -14,7 +14,7 @@
 #define MAX_LABEL_LENGTH 32
 
 /* Size of the HashTable. Determines the number of slots or buckets in the hash table. Not the actual memory consumption */
-#define HT_CAPACITY 50000
+#define HT_CAPACITY 5000
 
 
 /* ------------------------------------ Data Types ------------------------------------ */

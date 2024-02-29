@@ -8,7 +8,7 @@
 #include "identification.h"
 #include "error_handling.h"
 
-void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash) {
+void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder) {
     switch (commandType) {
         case EMPTY:
             printf("empty line\n");
@@ -18,11 +18,11 @@ void check_errors(CommandType commandType, char *line, int lineNumber, char * fi
             break;
         case DATA_DIRECTIVE:
             printf("data directive line\n");
-            check_data_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash);
+            check_data_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder);
             break;
         case STRING_DIRECTIVE:
             printf("string directive line\n");
-            check_string_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash);
+            check_string_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder);
             break;
         case ENTRY_DIRECTIVE:
             printf("entry directive line\n");
@@ -283,7 +283,7 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
         return;
     }
 
-    ht_insert(symbolsLabelsValuesHash, constantSplitedLine[0], constantSplitedLine[1], "constant", "0", "0");
+    ht_insert(symbolsLabelsValuesHash, constantSplitedLine[0], constantSplitedLine[1], "constant", "0", "0", "-1");
 
     /* Free the memory allocated for the splitedLines */
     freeStringArray(constantSplitedLine, constantNumberOfElements);
@@ -299,11 +299,12 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
  * @return True if the line is valid, False otherwise.
  */
 
-void check_data_directive_error(char * line, int lineNumber, char * fileName,  HashTable *symbolsLabelsValuesHash){
+void check_data_directive_error(char * line, int lineNumber, char * fileName,  HashTable *symbolsLabelsValuesHash, int * directiveOrder){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
     int i = 0;                             /* Loop counter */
+    char * directiveOrderString = NULL;     /* String to store the directive order */
 
 
     /* copy line to side variable */
@@ -398,7 +399,10 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
     
     if(hasLabel(originalLine)){
-        ht_insert(symbolsLabelsValuesHash, labelName, variableValue, "dataDirective", "0", "0");
+        directiveOrderString = intToString(*directiveOrder);
+        ht_insert(symbolsLabelsValuesHash, labelName, variableValue, "dataDirective", "0", "0", directiveOrderString);
+        (*directiveOrder)++;
+        free(directiveOrderString);
     }
     
 
@@ -418,10 +422,11 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
  * @return True if the line is valid, False otherwise.
  */
 
-void check_string_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash){
+void check_string_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+    char * directiveOrderString = NULL;     /* String to store the directive order */
 
     /* copy line to side variable */
     char* originalLine = malloc(strlen(line) + 1);
@@ -488,7 +493,11 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
     if(hasLabel(originalLine)){
         removeLeadingSpaces(value);
-        ht_insert(symbolsLabelsValuesHash, labelName, value, "stringDirective", "0", "0");
+        directiveOrderString = intToString(*directiveOrder);
+        ht_insert(symbolsLabelsValuesHash, labelName, value, "stringDirective", "0", "0", directiveOrderString);
+        (*directiveOrder)++;
+        free(directiveOrderString);
+
     }
 
     freeStringArray(splitedLine, numberOfElements);

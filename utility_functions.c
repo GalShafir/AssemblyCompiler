@@ -334,6 +334,28 @@ void removeLastCharacter(char *str) {
 }
 
 
+/* Function to convert integer to string */
+char* intToString(int num) {
+    /* Allocate memory for the string representation */
+    char* str = (char*)malloc(12); /* 12 is enough for INT_MIN */
+
+    if (str == NULL) {
+        /* Handle memory allocation failure */
+        perror(MEMORY_ALLOCATION_ERROR);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Use sprintf to convert int to string */
+    sprintf(str, "%d", num);
+
+    return str;
+}
+
+/* Function to convert string to integer */
+int stringToInt(const char* str) {
+    /* Use strtol to convert string to int */
+    return strtol(str, NULL, 10);
+}
 
 
 
@@ -419,6 +441,7 @@ Ht_item *linkedlist_remove(LinkedList *list)
     free(temp->item->type);
     free(temp->item->address);
     free(temp->item->memorySize);
+    free(temp->item->order);
     free(temp->item);
     free(temp);
     return it;
@@ -437,6 +460,7 @@ void free_linkedlist(LinkedList *list)
         free(temp->item->type);
         free(temp->item->address);
         free(temp->item->memorySize);
+        free(temp->item->order);
         free(temp->item);
         free(temp);
     }
@@ -466,7 +490,7 @@ void free_overflow_buckets(HashTable *table)
     free(buckets);
 }
 
-Ht_item *create_item(char *key, char *value, char *type, char *address, char *memorySize)
+Ht_item *create_item(char *key, char *value, char *type, char *address, char *memorySize, char *order)
 {
     /* Creates a pointer to a new HashTable item. */
     Ht_item *item = (Ht_item *)malloc(sizeof(Ht_item));
@@ -475,11 +499,13 @@ Ht_item *create_item(char *key, char *value, char *type, char *address, char *me
     item->type = (char *)malloc(strlen(type) + 1);
     item->address = (char *)malloc(strlen(address) + 1);
     item->memorySize = (char *)malloc(strlen(memorySize) + 1);
+    item->order = (char *)malloc(strlen(order) + 1);
     strcpy(item->key, key);
     strcpy(item->value, value);
     strcpy(item->type, type);
     strcpy(item->address, address);
     strcpy(item->memorySize, memorySize);
+    strcpy(item->order, order);
     return item;
 }
 
@@ -509,6 +535,7 @@ void free_item(Ht_item *item)
     free(item->type);
     free(item->address);
     free(item->memorySize);
+    free(item->order);
     free(item);
 }
 
@@ -550,10 +577,10 @@ void handle_collision(HashTable *table, unsigned long index, Ht_item *item)
     }
 }
 
-void ht_insert(HashTable *table, char *key, char *value, char *type, char *address, char *memorySize)
+void ht_insert(HashTable *table, char *key, char *value, char *type, char *address, char *memorySize, char *order)
 {
     /* Creates the item. */
-    Ht_item *item = create_item(key, value, type, address, memorySize);
+    Ht_item *item = create_item(key, value, type, address, memorySize, order);
 
     /* Computes the index. */
     int index = hash_function(key);
@@ -584,6 +611,7 @@ void ht_insert(HashTable *table, char *key, char *value, char *type, char *addre
             strcpy(table->items[index]->type, type);
             strcpy(table->items[index]->address, address);
             strcpy(table->items[index]->memorySize, memorySize);
+            strcpy(table->items[index]->order, order);
             return;
         }
         else
@@ -731,7 +759,7 @@ void ht_delete(HashTable *table, char *key)
                 node = head;
                 head = head->next;
                 node->next = NULL;
-                table->items[index] = create_item(node->item->key, node->item->value, node->item->type, node->item->address, node->item->memorySize);
+                table->items[index] = create_item(node->item->key, node->item->value, node->item->type, node->item->address, node->item->memorySize, node->item->order);
                 free_linkedlist(node);
                 table->overflow_buckets[index] = head;
                 return;
@@ -865,7 +893,7 @@ void print_table(HashTable *table)
     {
         if (table -> items[i])
         {
-            printf("Index:%d, Key:%s, Value:%s, Type:%s, Address:%s, Memory Size:%s\n", i, table -> items[i] -> key, table -> items[i] -> value, table -> items[i] -> type, table -> items[i] -> address, table -> items[i] -> memorySize);
+            printf("Index:%d, Key:%s, Value:%s, Type:%s, Address:%s, Memory Size:%s, Order:%s\n", i, table -> items[i] -> key, table -> items[i] -> value, table -> items[i] -> type, table -> items[i] -> address, table -> items[i] -> memorySize, table -> items[i] -> order);
         }
     }
 
