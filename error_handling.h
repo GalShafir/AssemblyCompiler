@@ -1,4 +1,5 @@
 void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder);
+void check_entries_externs(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash);
 void print_error(char *error, const char *line, int lineNumber, char *fileName);
 bool hasSomethingAfterSection(const char *input, const char *section);
 bool isValidInteger(const char *str);
@@ -7,3 +8,5 @@ bool checkQuotes(const char* line, const char* originalLine, int lineNumber, cha
 void check_constant_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash);
 void check_data_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder);
 void check_string_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder);
+void check_entry_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash);
+void check_extern_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash);

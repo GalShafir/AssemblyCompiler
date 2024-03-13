@@ -59,6 +59,7 @@ void processFile(char *inputFileName) {
     
     HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
     HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
+    HashTable *entriesExternsHash = create_table(HT_CAPACITY); /* Create the entries-externs table */
 
     createInstructionTable(instructionsHash);
 
@@ -70,7 +71,7 @@ void processFile(char *inputFileName) {
         return;
     }
 
-    /* Read lines from the input file */
+    /* Read lines from the input file - first iteration for error checking */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
@@ -82,12 +83,35 @@ void processFile(char *inputFileName) {
         check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder);
     }
 
+    /* Move the file pointer to the beginning of the file */
+
+    rewind(inputFile);
+
+    /* Reset the line number */
+    lineNumber = 0;  
+
+    /* Read lines from the input file - second iteration for checking externs and entries */
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        
+        lineNumber++;
+        
+        /* Identify the command type */
+        commandType = identifyCommandType(line, instructionsHash);
+
+        /* Check for errors */
+        check_entries_externs(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
+    }
+
+
     print_table(symbolsLabelsValuesHash);
 
     print_directives_by_order(symbolsLabelsValuesHash);
 
+    print_table(entriesExternsHash);
+
     free_table(instructionsHash);
     free_table(symbolsLabelsValuesHash);
+    free_table(entriesExternsHash);
 
 
     /* Close the input file */

@@ -46,6 +46,20 @@ void check_errors(CommandType commandType, char *line, int lineNumber, char * fi
     }
 }
 
+void check_entries_externs(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash) {
+
+    switch (commandType) {
+        case ENTRY_DIRECTIVE:
+            check_entry_directive_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash);
+            break;
+        case EXTERN_DIRECTIVE:
+            check_extern_directive_error(line, lineNumber, fileName, entriesExternsHash);
+            break;
+        default:
+            break;
+    }
+}
+
 /**
  * Print an error message to the console.
  * @param error - The error message to be printed.
@@ -507,3 +521,153 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
 
 }
+
+
+void check_entry_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash){
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+
+    /* copy line to side variable */
+    char* originalLine = malloc(strlen(line) + 1);
+
+    char value[MAX_LINE_LENGTH];
+
+    if (originalLine == NULL) {
+        perror(MEMORY_ALLOCATION_ERROR);
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(originalLine, line);
+
+    /* Skip leading whitespaces */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    if (hasSomethingAfterSection(line, ".entry") == False) {
+        print_error(".entry directive didn't get any arguments\n", originalLine, lineNumber, fileName);
+        return;
+    }
+
+    /* print line */
+    printf("Line before removal: %s\n", line);
+    removeSubstring(line, ".entry");
+    printf("Line after removal: %s\n", line);
+
+
+    if(hasLabel(line)){
+
+        splitedLine = splitString(line, ":", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        /* A warning can be inserted here */
+
+        strcpy(value, splitedLine[1]);
+        freeStringArray(splitedLine, numberOfElements);
+
+    }
+
+    else {
+
+        strcpy(value, line);
+    }
+
+    if(hasLabel(originalLine)){
+        removeLeadingSpaces(value);
+    }
+
+    removeWhiteSpaces(value);
+
+    if(ht_search(entriesExternsHash, value) != NULL && strcmp(ht_get_type(entriesExternsHash, value), "externDirective") == 0){
+        print_error("Entry is already defined as extern directive\n", originalLine, lineNumber, fileName);
+        return;
+    }
+
+    if(ht_search(symbolsLabelsValuesHash, value) == NULL){
+        print_error("The label the entry is pointing on is not defined in the file\n", originalLine, lineNumber, fileName);
+        return;
+    }
+
+    if(ht_search(entriesExternsHash, value) == NULL){
+        ht_insert(entriesExternsHash, value, "0", "entryDirective", "0", "0", "0");
+    }
+
+    free(originalLine);
+
+    return;
+}
+
+void check_extern_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash){
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+
+    /* copy line to side variable */
+    char* originalLine = malloc(strlen(line) + 1);
+
+    char value[MAX_LINE_LENGTH];
+
+    if (originalLine == NULL) {
+        perror(MEMORY_ALLOCATION_ERROR);
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(originalLine, line);
+
+    /* Skip leading whitespaces */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    if (hasSomethingAfterSection(line, ".extern") == False) {
+        print_error(".extern directive didn't get any arguments\n", originalLine, lineNumber, fileName);
+        return;
+    }
+
+    /* print line */
+    printf("Line before removal: %s\n", line);
+    removeSubstring(line, ".extern");
+    printf("Line after removal: %s\n", line);
+
+
+    if(hasLabel(line)){
+
+        splitedLine = splitString(line, ":", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        /* A warning can be inserted here */
+
+        strcpy(value, splitedLine[1]);
+        freeStringArray(splitedLine, numberOfElements);
+
+    }
+
+    else{
+
+        strcpy(value, line);
+    }
+
+    removeWhiteSpaces(value);
+
+    if(hasLabel(originalLine)){
+        removeLeadingSpaces(value);
+    }
+
+    if(ht_search(entriesExternsHash, value) != NULL && strcmp(ht_get_type(entriesExternsHash, value), "entryDirective") == 0){
+        print_error("Extern is already defined as entry directive\n", originalLine, lineNumber, fileName);
+        return;
+    }
+
+    if(ht_search(entriesExternsHash, value) == NULL){
+        ht_insert(entriesExternsHash, value, "0", "externDirective", "0", "0", "0");
+    }
+
+    free(originalLine);
+
+    return;
+
+
+}
+
+

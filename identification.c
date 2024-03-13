@@ -15,11 +15,18 @@
 void cleanCommand(char *line) {
     int i, j;
     int leadingSpace = 1;  /* Flag to track leading spaces */
+    int insideQuotes = 0; /* Flag to track if inside quotes */
 
     /* Iterate through each character in the line */
     for (i = 0, j = 0; line[i] != '\0'; i++) {
+        /* Check if the current character is a quote */
+        if (line[i] == '"') {
+            /* Toggle the insideQuotes flag */
+            insideQuotes = !insideQuotes;
+        }
+
         /* Replace consecutive spaces or tabs with a single space */
-        if (isspace(line[i])) {
+        if (!insideQuotes && isspace(line[i])) {
             if (!leadingSpace) {
                 line[j++] = ' ';
                 leadingSpace = 1;

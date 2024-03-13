@@ -70,5 +70,19 @@ RRR:            .string         "a1b2"
 XXX: .string fff
 .string "aaa
 .string bbb"
+HELLO:        .string        "    abc    def   "   
+ZZZ:            .string         "a1b2c3"
 
-.extern L3 
+.extern L3
+.entry YPYP
+.extern ppppppp
+Hello: .extern L4
+Byeeee:         .entry      A
+.entry L3
+.extern LOOP
+.extern
+.entry
+.entry ffff
+ffff: .data 1,-2,+3
+.extern ffff
+
