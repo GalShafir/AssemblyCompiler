@@ -32,6 +32,19 @@ typedef enum InstructionType {
     UNDEFINED_INSTRUCTION
 } InstructionType;
 
+typedef enum AddressingMode {
+
+    IMMEDIATE,
+    DIRECT,
+    INDEX,
+    REGISTER,
+    UNDEFINED_ADDRESSING,
+    UNDEFINED_CONSTANT,
+    UNDEFINED_LABEL,
+    INDEX_OVERFLOW
+
+} AddressingMode;
+
 CommandType identifyCommandType(char *line, HashTable* instructionsHash);
 bool isComment(char *line);
 bool isEmpty(char *line);
@@ -41,3 +54,5 @@ CommandType identifyDirective(char *line);
 bool isConstant(char *line);
 bool hasLabel(char *line);
 void removeLabel(char *line);
+
+AddressingMode identifyAddressingMode(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);

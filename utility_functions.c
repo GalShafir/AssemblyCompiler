@@ -333,6 +333,39 @@ void removeLastCharacter(char *str) {
     }
 }
 
+/**
+ * isValidInteger - Check if a given string represents a valid integer.
+ * @param str - The string to be checked.
+ * @return True if valid, False otherwise.
+ */
+bool isValidInteger(const char *str) {
+    if (str == NULL || *str == '\0') {
+        /* Empty string is not a valid integer */
+        return False;
+    }
+
+    /* Skip leading whitespaces */
+    while (isspace(*str)) {
+        str++;
+    }
+
+    /* Check for optional sign */
+    if (*str == '+' || *str == '-') {
+        str++;
+    }
+
+    /* Check if the remaining characters are digits */
+    while (isdigit(*str)) {
+        str++;
+    }
+
+    /* Check if the string has been fully processed (no trailing characters) */
+    if(*str == '\0'){
+        return True;
+    } else {
+        return False;
+    }
+}
 
 /* Function to convert integer to string */
 char* intToString(int num) {
@@ -355,6 +388,17 @@ char* intToString(int num) {
 int stringToInt(const char* str) {
     /* Use strtol to convert string to int */
     return strtol(str, NULL, 10);
+}
+
+int countCharacters(const char *str) {
+    int count = 0;
+
+    /* Iterate through the string until the null terminator is reached */
+    while (str[count] != '\0') {
+        count++; /* Increment count for each character encountered */
+    }
+
+    return count;
 }
 
 

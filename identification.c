@@ -285,6 +285,107 @@ CommandType identifyCommandType(char *line, HashTable* instructionsHash) {
     }
 }
 
+AddressingMode identifyAddressingMode(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash) {
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+    char * directiveIndex = NULL;
+    char * constantValueString = NULL;
+
+    cleanCommand(operand);
+
+    /* If the operand starts with a '#' suspect immediate addressing mode */
+    printf("Operand: %s\n", operand);
+    if (operand[0] == '#') {
+        splitedLine = splitString(operand, "#", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        if(isValidInteger(splitedLine[0])){
+            freeStringArray(splitedLine, numberOfElements);
+            return IMMEDIATE;
+        }
+
+        else if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "constant") == 0){
+            freeStringArray(splitedLine, numberOfElements);
+            return IMMEDIATE;
+        }
+        else{
+            freeStringArray(splitedLine, numberOfElements);
+            return UNDEFINED_CONSTANT;
+        }
+    /* If there is a use of existing data directive or string directive return direct addressing mode*/
+    } else if ((ht_search(symbolsLabelsValuesHash, operand) != NULL && (strcmp(ht_get_type(symbolsLabelsValuesHash, operand), "dataDirective") == 0 || strcmp(ht_get_type(symbolsLabelsValuesHash, operand), "stringDirective") == 0 || strcmp(ht_get_type(symbolsLabelsValuesHash, operand), "instruction") == 0))
+     || (ht_search(entriesExternsHash, operand) != NULL && ((strcmp(ht_get_type(entriesExternsHash, operand), "entryDirective") == 0) || (strcmp(ht_get_type(entriesExternsHash, operand), "externDirective") == 0)))) {
+        return DIRECT;
+
+    /* If the opernad contains a '[' and a ']' and a valid integer in between suspect index addressing mode */
+    } else if (strchr(operand, '[') != NULL && strchr(operand, ']') != NULL) {
+        splitedLine = splitString(operand, "[", &numberOfElements);
+        removeSubstring(splitedLine[1], "]");
+        
+        if(ht_search(symbolsLabelsValuesHash,splitedLine[0]) != NULL && (strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "dataDirective") == 0 || strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "stringDirective") == 0)){
+            if(isValidInteger(splitedLine[1])){
+                directiveIndex = malloc(14);
+                strcpy(directiveIndex, ht_get_memory_size(symbolsLabelsValuesHash, splitedLine[0]));
+                if(stringToInt(splitedLine[1]) < 0 || stringToInt(splitedLine[1]) > (stringToInt(directiveIndex) -1)){
+                    freeStringArray(splitedLine, numberOfElements);
+                    free(directiveIndex);
+                    return INDEX_OVERFLOW;
+                }
+                freeStringArray(splitedLine, numberOfElements);
+                free(directiveIndex);
+                return INDEX;
+            }
+
+            else if (ht_search(symbolsLabelsValuesHash, splitedLine[1]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[1]), "constant") == 0){
+
+                directiveIndex = malloc(14);
+                constantValueString = malloc(14);
+                strcpy(directiveIndex, ht_get_memory_size(symbolsLabelsValuesHash, splitedLine[0]));
+                strcpy(constantValueString, ht_search(symbolsLabelsValuesHash, splitedLine[1]));
+
+                if(stringToInt(constantValueString) < 0 || stringToInt(constantValueString) > (stringToInt(directiveIndex) -1)){
+                    freeStringArray(splitedLine, numberOfElements);
+                    free(directiveIndex);
+                    free(constantValueString);
+                    return INDEX_OVERFLOW;
+                }
+
+                freeStringArray(splitedLine, numberOfElements);
+                free(directiveIndex);
+                free(constantValueString);
+                return INDEX;
+            }
+
+            else{
+                freeStringArray(splitedLine, numberOfElements);
+                return UNDEFINED_CONSTANT;
+            }
+
+        } else if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && (strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0)){
+            freeStringArray(splitedLine, numberOfElements);
+            return INDEX;
+        }
+
+
+        else{
+            printf("#######");
+            printStringArray(splitedLine, numberOfElements);
+
+            freeStringArray(splitedLine, numberOfElements);
+            return UNDEFINED_LABEL;
+        }
+
+
+    /* If the operand is a register return register addressing mode */
+    } else if (strcmp(operand, "r0") == 0 || strcmp(operand, "r1") == 0 || strcmp(operand, "r2") == 0 || strcmp(operand, "r3") == 0 || strcmp(operand, "r4") == 0 || strcmp(operand, "r5") == 0 || strcmp(operand, "r6") == 0 || strcmp(operand, "r7") == 0) {
+        return REGISTER;
+
+    } else {
+        return UNDEFINED_ADDRESSING;
+    }
+}
+
 
 
 

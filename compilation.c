@@ -80,7 +80,7 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder);
+        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash);
     }
 
     /* Move the file pointer to the beginning of the file */
@@ -90,7 +90,7 @@ void processFile(char *inputFileName) {
     /* Reset the line number */
     lineNumber = 0;  
 
-    /* Read lines from the input file - second iteration for checking externs and entries */
+    /* Read lines from the input file - second iteration for checking externs and entries (because entry can be declared before the actual) */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
@@ -99,7 +99,26 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_entries_externs(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
+        check_entries_externs_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
+    }
+
+    /* Move the file pointer to the beginning of the file */
+
+    rewind(inputFile);
+
+    /* Reset the line number */
+    lineNumber = 0;  
+
+    /* Read lines from the input file - third iteration for checking instructions errors after we have the symbols labels hash */
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        
+        lineNumber++;
+        
+        /* Identify the command type */
+        commandType = identifyCommandType(line, instructionsHash);
+
+        /* Check for errors */
+        check_instruction_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
     }
 
 
