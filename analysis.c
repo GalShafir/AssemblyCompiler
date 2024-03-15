@@ -11,13 +11,11 @@
 
 
 
-void calculate_memory_addresses(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, int * currentMemoryAddress) {
+void calculate_memory_addresses_for_instructions(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, int * currentMemoryAddress) {
     switch (commandType) {
         case DATA_DIRECTIVE:
-            calculate_data_directive_memory_address(line, symbolsLabelsValuesHash, directiveOrder, currentMemoryAddress);
             break;
         case STRING_DIRECTIVE:
-            calculate_string_directive_memory_address(line, symbolsLabelsValuesHash, directiveOrder, currentMemoryAddress);
             break;
         case INSTRUCTION:
             calculate_instruction_memory_address(line, symbolsLabelsValuesHash, entriesExternsHash, currentMemoryAddress);
@@ -27,6 +25,23 @@ void calculate_memory_addresses(CommandType commandType, char *line, HashTable *
 
     }
 }
+
+void calculate_memory_addresses_for_directives(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, int * currentMemoryAddress) {
+    switch (commandType) {
+        case DATA_DIRECTIVE:
+            calculate_data_directive_memory_address(line, symbolsLabelsValuesHash, directiveOrder, currentMemoryAddress);
+            break;
+        case STRING_DIRECTIVE:
+            calculate_string_directive_memory_address(line, symbolsLabelsValuesHash, directiveOrder, currentMemoryAddress);
+            break;
+        case INSTRUCTION:
+            break;
+        default:
+            break;
+
+    }
+}
+
 
 void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash){
 
@@ -55,6 +70,7 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
                 analyze_data_directive(line, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, outputFile);
                 break;
             case STRING_DIRECTIVE:
+                analyze_string_directive(line, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, outputFile);
                 break;
             case INSTRUCTION:
                 break;
@@ -507,8 +523,6 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
         printf("binary represtation of %d is %s\n", stringToInt(splitedLine[i]), binary);
         free(binary);
 
-
-
     }
 
     freeStringArray(splitedLine, numberOfElements);
@@ -516,6 +530,62 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
     return;
 
 }
+
+void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, FILE *outputFile){
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+    int i;                                 /* Loop counter */
+    int counter = 0;                       /* Counter to count the number of characters in the string */
+    char * binary = NULL;                  /* String to store the binary representation of the decimal number */
+
+    char labelName[MAX_LABEL_LENGTH];
+    char value[MAX_LINE_LENGTH];
+
+    /* Skip leading whitespaces */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    removeSubstring(line, ".data");
+
+
+    if(hasLabel(line)){
+
+        splitedLine = splitString(line, ":", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        strcpy(labelName, splitedLine[0]);
+        freeStringArray(splitedLine, numberOfElements);
+
+        strcpy(value, ht_search(symbolsLabelsValuesHash, labelName));
+    }
+
+    for (i = 1; value[i+1] != '\0'; i++) {
+
+        /* Write line to the output file */
+        binary = (char *)malloc(14 + 1); /* Allocate memory for the binary string */
+        printf("assci represtation of %c is %d\n", value[i], (int)(value[i]));
+        decimalToBinary((int)(value[i]), 14, binary);
+        fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + (i - 1));
+        fputs(binary, outputFile);
+        fputs("\n", outputFile);
+        printf("binary represtation of %d is %s\n", (int)(value[i]), binary);
+        counter++;
+        free(binary);
+
+
+    }
+
+    /* add the null terminator */
+    fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + counter);
+    fputs("00000000000000", outputFile);
+    fputs("\n", outputFile);
+
+    return;
+
+}
+
 
 
 

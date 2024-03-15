@@ -147,7 +147,7 @@ void processFile(char *inputFileName) {
     directiveOrder = 0;
     printf("------------------------------------------- Memory Calculations -------------------------------------------\n");
 
-    /* Read lines from the input file - Get the address memory for each line - now we know there are no syntax errors */
+    /* Read lines from the input file - Get the address memory for each instruction line - now we know there are no syntax errors */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
@@ -156,7 +156,28 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        calculate_memory_addresses(commandType, line, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash,&currentMemoryAddress);
+        calculate_memory_addresses_for_instructions(commandType, line, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash,&currentMemoryAddress);
+    }
+
+    /* Move the file pointer to the beginning of the file */
+
+    rewind(inputFile);
+
+    /* Reset the line number */
+    lineNumber = 0; 
+    directiveOrder = 0;
+    printf("------------------------------------------- Memory Calculations -------------------------------------------\n");
+
+    /* Read lines from the input file - Get the address memory for each directive line - now we know there are no syntax errors */
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        
+        lineNumber++;
+        
+        /* Identify the command type */
+        commandType = identifyCommandType(line, instructionsHash);
+
+        /* Check for errors */
+        calculate_memory_addresses_for_directives(commandType, line, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash,&currentMemoryAddress);
     }
 
     fclose(inputFile);
