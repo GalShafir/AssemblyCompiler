@@ -1,46 +1,33 @@
-.extern XYZ
-    .entry MAIN
+.entry START
+    .extern Z
+    .define number=5
+MAIN: mov r2, START
+LOOP1: jmp L2
+prn #-4
+bne Z
+sub r1, r3
+    bne L4
+L2:  inc J
+    .entry LOOP1
+jmp Z
+END1: hlt
+STR1: .string "ghijkl"
+START: .data 8,-12,20
+J: .data  33
+    .extern L4
 
-KINITIALVALUE: sub r4   ,    r3
-
-MAIN:   mov r3, LENGTH
-
-LOOP:   jmp L1
-
-sub r1, r4
-    bne END
-sub r1, r4
-    bne END
-    endmcro
-
-    .entry GGG
-prn #-5
-bne LOOP
-
-sub r1, r4
-    bne END
-
-L1:     inc K
-bne LOOP
-
-END:    hlt
-
-STR:    .string "abcdef"
-
-LENGTH: .data 6, -9, 15
-
-K:      .data 4    ,    -55,4,4,4,6
-
-mov reg1, val
-add reg2, reg1
-mov reg1, val
-add reg2, reg1
-    endmcro
-
-mov reg1, val
-add reg2, reg1
-ABC: mov XYZ, r3
-reg1: .data 6,5,-555,66
-reg2: .data 6,5,-555,66
-val: .string "asfas   %%dfjk"
-AAAA: rts,
+; Using rest of the opcodes
+    LOOP2: cmp r5, r6
+    dec r5
+    not r2
+    clr r6
+    add #number, r4
+    red r1
+    jsr LOOP2
+rts
+END2: hlt
+STR2: .string "mnopqr"
+DATA2: .data 10,-15,25
+L: .data  44
+    .extern L5
+.data 30

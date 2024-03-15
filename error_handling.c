@@ -8,7 +8,7 @@
 #include "identification.h"
 #include "error_handling.h"
 
-void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash) {
+void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, bool * foundError) {
     switch (commandType) {
         case EMPTY:
             printf("empty line\n");
@@ -18,11 +18,11 @@ void check_errors(CommandType commandType, char *line, int lineNumber, char * fi
             break;
         case DATA_DIRECTIVE:
             printf("data directive line\n");
-            check_data_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder);
+            check_data_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder, foundError);
             break;
         case STRING_DIRECTIVE:
             printf("string directive line\n");
-            check_string_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder);
+            check_string_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder, foundError);
             break;
         case ENTRY_DIRECTIVE:
             printf("entry directive line\n");
@@ -35,41 +35,43 @@ void check_errors(CommandType commandType, char *line, int lineNumber, char * fi
             break;
         case INSTRUCTION:
             printf("Instruction\n");
-            temp_instruction_addition(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash);
+            temp_instruction_addition(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash, foundError);
             break;
         case CONSTANT:
             printf("Constant\n");
-            check_constant_error(line, lineNumber, fileName, symbolsLabelsValuesHash);
+            check_constant_error(line, lineNumber, fileName, symbolsLabelsValuesHash, foundError);
             break;
         case UNDEFINED:
             print_error("undefined instruction\n", line, lineNumber, fileName);
+            *foundError = True;
             printf("undefined line\n");
             break;
     }
 }
 
-void check_entries_externs_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash) {
+void check_entries_externs_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError) {
 
     switch (commandType) {
         case ENTRY_DIRECTIVE:
-            check_entry_directive_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash);
+            check_entry_directive_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash, foundError);
             break;
         case EXTERN_DIRECTIVE:
-            check_extern_directive_error(line, lineNumber, fileName, entriesExternsHash);
+            check_extern_directive_error(line, lineNumber, fileName, entriesExternsHash, foundError);
             break;
         default:
             break;
     }
 }
 
-void check_instruction_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash){
+void check_instruction_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError){
     
         switch (commandType) {
             case INSTRUCTION:
-                check_instruction_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash);
+                check_instruction_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash, foundError);
                 break;
             case UNDEFINED:
                 print_error("undefined instruction\n", line, lineNumber, fileName);
+                *foundError = True;
                 break;
             default:
                 break;
@@ -111,8 +113,6 @@ void print_error(char *error, const char *line, int lineNumber, char *fileName) 
 
 
 }
-
-
 
 
 /**
@@ -258,7 +258,7 @@ bool checkLabelName(const char* label) {
 }
 
 
-void check_constant_error(char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash) {
+void check_constant_error(char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, bool * foundError) {
 
     char **constantSplitedLine;                    /* Array to store the constat splited line */
     int constantNumberOfElements = 0;              /* Reset the elemnts number - for the constat string spliter counter */
@@ -275,11 +275,13 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
 
     if (hasSomethingAfterSection(line, ".define") == False) {
         print_error(".define didn't get any definition (the part after the define is empty)\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
     if (hasLabel(line)) {
         print_error(".define instruction cannot have a lablel before it\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -293,16 +295,19 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
     printStringArray(constantSplitedLine, constantNumberOfElements);
     if(constantNumberOfElements != 2){
         print_error("Invalid constant definition\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
     if(ht_search(symbolsLabelsValuesHash, constantSplitedLine[0]) != NULL){
         print_error("Constant is already defined\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
     if(isValidInteger(constantSplitedLine[1]) == False){
         print_error("Invalid constant definition - number is not a valid integer\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -322,7 +327,7 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
  * @return True if the line is valid, False otherwise.
  */
 
-void check_data_directive_error(char * line, int lineNumber, char * fileName,  HashTable *symbolsLabelsValuesHash, int * directiveOrder){
+void check_data_directive_error(char * line, int lineNumber, char * fileName,  HashTable *symbolsLabelsValuesHash, int * directiveOrder, bool * foundError){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
@@ -352,6 +357,7 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
     if (hasSomethingAfterSection(line, ".data") == False) {
         print_error(".data directive didn't get any arguments\n", line, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -368,6 +374,7 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Directive is already defined\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -375,11 +382,13 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
         if(checkLabelLength(labelName) == False){
             print_error("Label name is too long\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
         if(checkLabelName(labelName) == False){
             print_error("Label name is a reserved word\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -404,6 +413,7 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
         if(isValidInteger(splitedLine[i]) == False && ht_search(symbolsLabelsValuesHash, splitedLine[i]) == NULL){
             print_error("Invalid data definition - One of the numbers is not a valid integer or a defined variable\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -454,7 +464,7 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
  * @return True if the line is valid, False otherwise.
  */
 
-void check_string_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder){
+void check_string_directive_error(char * line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, bool * foundError){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
@@ -483,6 +493,7 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
     if (hasSomethingAfterSection(line, ".string") == False) {
         print_error(".string directive didn't get any arguments\n", line, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -499,6 +510,7 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Directive is already defined\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -506,11 +518,13 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 
         if(checkLabelLength(labelName) == False){
             print_error("Label name is too long\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
         if(checkLabelName(labelName) == False){
             print_error("Label name is a reserved word\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -551,7 +565,7 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
 }
 
 
-void check_entry_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash){
+void check_entry_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
@@ -575,6 +589,7 @@ void check_entry_directive_error(char * line, int lineNumber, char * fileName, H
 
     if (hasSomethingAfterSection(line, ".entry") == False) {
         print_error(".entry directive didn't get any arguments\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -609,11 +624,13 @@ void check_entry_directive_error(char * line, int lineNumber, char * fileName, H
 
     if(ht_search(entriesExternsHash, value) != NULL && strcmp(ht_get_type(entriesExternsHash, value), "externDirective") == 0){
         print_error("Entry is already defined as extern directive\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
     if(ht_search(symbolsLabelsValuesHash, value) == NULL){
         print_error("The label the entry is pointing on is not defined in the file\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -626,7 +643,7 @@ void check_entry_directive_error(char * line, int lineNumber, char * fileName, H
     return;
 }
 
-void check_extern_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash){
+void check_extern_directive_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, bool * foundError){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
@@ -650,6 +667,7 @@ void check_extern_directive_error(char * line, int lineNumber, char * fileName, 
 
     if (hasSomethingAfterSection(line, ".extern") == False) {
         print_error(".extern directive didn't get any arguments\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -684,6 +702,7 @@ void check_extern_directive_error(char * line, int lineNumber, char * fileName, 
 
     if(ht_search(entriesExternsHash, value) != NULL && strcmp(ht_get_type(entriesExternsHash, value), "entryDirective") == 0){
         print_error("Extern is already defined as entry directive\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -698,7 +717,7 @@ void check_extern_directive_error(char * line, int lineNumber, char * fileName, 
 
 }
 
-void temp_instruction_addition(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash){
+void temp_instruction_addition(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError){
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
 
@@ -726,12 +745,14 @@ void temp_instruction_addition(char * line, int lineNumber, char * fileName, Has
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Label is already defined\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
 
         if(ht_search(entriesExternsHash, splitedLine[0]) != NULL){
             print_error("Label is already defined as entry or extern directive\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
@@ -740,12 +761,14 @@ void temp_instruction_addition(char * line, int lineNumber, char * fileName, Has
 
         if(checkLabelLength(labelName) == False){
             print_error("Label name is too long\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
 
         if(checkLabelName(labelName) == False){
             print_error("Label name is a reserved word\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
@@ -768,7 +791,7 @@ void temp_instruction_addition(char * line, int lineNumber, char * fileName, Has
 
 }
 
-void check_instruction_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash){
+void check_instruction_error(char * line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError){
 
     char **splitedLine;                    /* Array to store the splited line */
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
@@ -802,12 +825,14 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         }
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Label is already defined\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
 
         if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
             print_error("Label is already defined as an extern directive\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
@@ -816,12 +841,14 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 
         if(checkLabelLength(labelName) == False){
             print_error("Label name is too long\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
 
         if(checkLabelName(labelName) == False){
             print_error("Label name is a reserved word\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             freeStringArray(splitedLine, numberOfElements);
             return;
         }
@@ -845,11 +872,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 
     if (number_of_operands_is_valid(instruction, line) == False) {
         print_error("Invalid number of operands\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
     if(checkInstructionCommas(line, originalLine, lineNumber, fileName) == False){
         print_error("Invalid commas\n", originalLine, lineNumber, fileName);
+        *foundError = True;
         return;
     }
 
@@ -871,41 +900,49 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 
             if(operand1AddressingMode == UNDEFINED_ADDRESSING){
                 print_error("Unkown addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand2AddressingMode == UNDEFINED_ADDRESSING){
                 print_error("Unkown addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand1AddressingMode == UNDEFINED_CONSTANT){
                 print_error("The constant that has been used for the source operand is undifined\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand2AddressingMode == UNDEFINED_CONSTANT){
                 print_error("The constant that has been used for the destination operand is undifined\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand1AddressingMode == UNDEFINED_LABEL){
                 print_error("Label does not exists for the source operand, also make sure it as a data or a string directive\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand2AddressingMode == UNDEFINED_LABEL){
                 print_error("Label does not exists for the destination operand, also make sure it as a data or a string directive\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand1AddressingMode == INDEX_OVERFLOW){
                 print_error("Index overflow for the source operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
             if(operand2AddressingMode == INDEX_OVERFLOW){
                 print_error("Index overflow for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -913,11 +950,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
             if(strcmp(instruction, "mov") == 0){
                 if(operand1AddressingMode != IMMEDIATE && operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
                 if(operand2AddressingMode != DIRECT && operand2AddressingMode != INDEX && operand2AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
@@ -927,11 +966,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
             else if(strcmp(instruction, "cmp") == 0){
                 if(operand1AddressingMode != IMMEDIATE && operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
                 if(operand2AddressingMode != IMMEDIATE && operand2AddressingMode != DIRECT && operand2AddressingMode != INDEX && operand2AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
@@ -941,11 +982,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
             else if(strcmp(instruction, "add") == 0){
                 if(operand1AddressingMode != IMMEDIATE && operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
                 if(operand2AddressingMode != DIRECT && operand2AddressingMode != INDEX && operand2AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
@@ -955,11 +998,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
             else if(strcmp(instruction, "sub") == 0){
                 if(operand1AddressingMode != IMMEDIATE && operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
                 if(operand2AddressingMode != DIRECT && operand2AddressingMode != INDEX && operand2AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
@@ -969,11 +1014,13 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
             else if(strcmp(instruction, "lea") == 0){
                 if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX){
                     print_error("Invalid addressing mode for the source operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
                 if(operand2AddressingMode != DIRECT && operand2AddressingMode != INDEX && operand2AddressingMode != REGISTER){
                     print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                    *foundError = True;
                     return;
                 }
 
@@ -998,21 +1045,25 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 
         if(operand1AddressingMode == UNDEFINED_ADDRESSING){
             print_error("Unkown addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
         if(operand1AddressingMode == UNDEFINED_CONSTANT){
             print_error("The constant that has been used for the destination operand is undifined\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
         if(operand1AddressingMode == UNDEFINED_LABEL){
             print_error("Label does not exists for the destination operand, also make sure it as a data or a string directive\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
         if(operand1AddressingMode == INDEX_OVERFLOW){
             print_error("Index overflow for the destination operand\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
 
@@ -1020,6 +1071,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         if(strcmp(instruction, "not") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1029,6 +1081,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "clr") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1038,6 +1091,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "inc") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1047,6 +1101,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "dec") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1056,6 +1111,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "jmp") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1065,6 +1121,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "bne") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1074,6 +1131,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "red") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1083,6 +1141,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "prn") == 0){
             if(operand1AddressingMode != IMMEDIATE && operand1AddressingMode != DIRECT && operand1AddressingMode != INDEX && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1092,6 +1151,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         else if(strcmp(instruction, "jsr") == 0){
             if(operand1AddressingMode != DIRECT && operand1AddressingMode != REGISTER){
                 print_error("Invalid addressing mode for the destination operand\n", originalLine, lineNumber, fileName);
+                *foundError = True;
                 return;
             }
 
@@ -1103,6 +1163,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         removeLeadingSpaces(line);
         if (hasSomethingAfterSection(line, instruction) == True) {
             print_error("Invalid number of operands\n", originalLine, lineNumber, fileName);
+            *foundError = True;
             return;
         }
     }

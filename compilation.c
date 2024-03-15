@@ -7,6 +7,7 @@
 #include "compilation.h"
 #include "identification.h"
 #include "error_handling.h"
+#include "analysis.h"
 
 int compile(char * fileName){
 
@@ -56,6 +57,8 @@ void processFile(char *inputFileName) {
     CommandType commandType;                /* Type of the command in the line */
     int lineNumber = 0;                    /* Counter for the line number */
     int directiveOrder = 0;               /* Counter for the directive order */
+    bool foundError = False;              /* Flag to indicate if an error was found */
+    int currentMemoryAddress = STARTING_MEMORY_LOCATION;       /* Counter for the current memory address */
     
     HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
     HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
@@ -71,6 +74,8 @@ void processFile(char *inputFileName) {
         return;
     }
 
+    printf("------------------------------------------- Directive errors -------------------------------------------\n");
+
     /* Read lines from the input file - first iteration for error checking */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
@@ -80,7 +85,7 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash);
+        check_errors(commandType, line, lineNumber, inputFileName, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash, &foundError);
     }
 
     /* Move the file pointer to the beginning of the file */
@@ -91,6 +96,7 @@ void processFile(char *inputFileName) {
     lineNumber = 0;  
 
     /* Read lines from the input file - second iteration for checking externs and entries (because entry can be declared before the actual) */
+    printf("------------------------------------------- Entries / Exters errors -------------------------------------------\n");
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
@@ -99,7 +105,7 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_entries_externs_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
+        check_entries_externs_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash, &foundError);
     }
 
     /* Move the file pointer to the beginning of the file */
@@ -108,6 +114,8 @@ void processFile(char *inputFileName) {
 
     /* Reset the line number */
     lineNumber = 0;  
+
+    printf("------------------------------------------- Instructions errors -------------------------------------------\n");
 
     /* Read lines from the input file - third iteration for checking instructions errors after we have the symbols labels hash */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -118,15 +126,52 @@ void processFile(char *inputFileName) {
         commandType = identifyCommandType(line, instructionsHash);
 
         /* Check for errors */
-        check_instruction_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash);
+        check_instruction_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash, &foundError);
     }
+
+    if (foundError == True) {
+        free_table(instructionsHash);
+        free_table(symbolsLabelsValuesHash);
+        free_table(entriesExternsHash);
+        fclose(inputFile);
+        printf("Errors found in file %s. Compilation aborted.\n", inputFileName);
+        return;
+    }
+
+    /* Move the file pointer to the beginning of the file */
+
+    rewind(inputFile);
+
+    /* Reset the line number */
+    lineNumber = 0; 
+    directiveOrder = 0;
+    printf("------------------------------------------- Memory Calculations -------------------------------------------\n");
+
+    /* Read lines from the input file - Get the address memory for each line - now we know there are no syntax errors */
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        
+        lineNumber++;
+        
+        /* Identify the command type */
+        commandType = identifyCommandType(line, instructionsHash);
+
+        /* Check for errors */
+        calculate_memory_addresses(commandType, line, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash,&currentMemoryAddress);
+    }
+
+    fclose(inputFile);
+    printf("------------------------------------------- Binary File Creation -------------------------------------------\n");
+    build_binary_file(inputFileName, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash);
+
+
+
 
 
     print_table(symbolsLabelsValuesHash);
-
     print_directives_by_order(symbolsLabelsValuesHash);
-
     print_table(entriesExternsHash);
+
+
 
     free_table(instructionsHash);
     free_table(symbolsLabelsValuesHash);

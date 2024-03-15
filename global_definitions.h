@@ -16,6 +16,8 @@
 /* Size of the HashTable. Determines the number of slots or buckets in the hash table. Not the actual memory consumption */
 #define HT_CAPACITY 5000
 
+#define STARTING_MEMORY_LOCATION 100
+
 
 /* ------------------------------------ Data Types ------------------------------------ */
 
