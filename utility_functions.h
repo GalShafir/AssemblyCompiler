@@ -45,6 +45,7 @@ bool isValidInteger(const char *str);
 char* intToString(int num);
 int stringToInt(const char* str);
 int countCharacters(const char *str);
+void joinStrings(char** str1, const char* str2);
 LinkedList *allocate_list();
 LinkedList *linkedlist_insert(LinkedList *list, Ht_item *item);
 Ht_item *linkedlist_remove(LinkedList *list);

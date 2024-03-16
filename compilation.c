@@ -63,8 +63,10 @@ void processFile(char *inputFileName) {
     HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
     HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
     HashTable *entriesExternsHash = create_table(HT_CAPACITY); /* Create the entries-externs table */
+    HashTable *registersHash = create_table(HT_CAPACITY); /* Create the registers table */
 
     createInstructionTable(instructionsHash);
+    createRegistersTable(registersHash);
 
     /* Open the input file */
     inputFile = openFile(inputFileName, "r");
@@ -182,7 +184,7 @@ void processFile(char *inputFileName) {
 
     fclose(inputFile);
     printf("------------------------------------------- Binary File Creation -------------------------------------------\n");
-    build_binary_file(inputFileName, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash);
+    build_binary_file(inputFileName, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, registersHash);
 
 
 
@@ -215,22 +217,34 @@ void processFile(char *inputFileName) {
 
 void createInstructionTable(HashTable* mp){
 
-    ht_insert(mp, "mov", "0",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "cmp", "1",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "add", "2",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "sub", "3",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "not", "4",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "clr", "5",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "lea", "6",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "inc", "7",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "dec", "8",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "jmp", "9",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "bne", "10", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "red", "11", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "prn", "12", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "jsr", "13", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "rts", "14", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "hlt", "15", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "mov", "0000",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "cmp", "0001",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "add", "0010",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "sub", "0011",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "not", "0100",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "clr", "0101",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "lea", "0110",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "inc", "0111",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "dec", "1000",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "jmp", "1001",  "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "bne", "1010", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "red", "1011", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "prn", "1100", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "jsr", "1101", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "rts", "1110", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "hlt", "1111", "instruction", "no address", "no size", "no order");
+}
+
+void createRegistersTable(HashTable* mp){
+
+    ht_insert(mp, "r0", "000",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r1", "001",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r2", "010",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r3", "011",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r4", "100",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r5", "101",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r6", "110",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r7", "111",  "register", "no address", "no size", "no order");
 }
 
 void print_directives_by_order(HashTable *table)

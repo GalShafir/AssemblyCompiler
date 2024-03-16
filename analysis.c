@@ -43,7 +43,7 @@ void calculate_memory_addresses_for_directives(CommandType commandType, char *li
 }
 
 
-void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash){
+void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, HashTable *registersHash){
 
     char line[MAX_LINE_LENGTH];             /* Buffer to store each line from the file */
     char outputFileName[MAX_LINE_LENGTH];   /* Buffer to store the output file name */
@@ -53,6 +53,8 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
 
     CommandType commandType;                /* Type of the command in the line */
 
+    int currentMemoryAddress = STARTING_MEMORY_LOCATION;                     /* Line number in the input file */
+
 
     /* Open the input file */
     inputFile = openFile(inputFileName, "r");
@@ -60,6 +62,27 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
     /* Open a new file with the same name but a ".am" extension for writing */
     sprintf(outputFileName, "%s.temp", removeFileExtension(inputFileName));
     outputFile = openFile(outputFileName, "w");
+
+    printf("---------------------- binary instruction ----------------------\n");
+
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        
+        /* Identify the command type */
+        commandType = identifyCommandType(line, instructionsHash);
+        switch (commandType) {
+            case INSTRUCTION:
+                analyze_instruction(line, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, registersHash, outputFile, &currentMemoryAddress);
+            default:
+                break;
+        }
+
+    }
+
+    /* Move the file pointer to the beginning of the file */
+
+    rewind(inputFile);
+
+    printf("---------------------- binary data directive ----------------------\n");
 
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
@@ -77,8 +100,7 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
             default:
                 break;
 
-    }
-
+        }
 
     }
 
@@ -92,7 +114,6 @@ void decimalToBinary(int decimal, int numBits, char *binary) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
-
 
     /* Handle negative numbers using two's complement */
     if (decimal < 0) {
@@ -585,6 +606,529 @@ void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, H
     return;
 
 }
+
+void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, HashTable *registersHash, FILE *outputFile, int * currentMemoryAddress){
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+
+    int memorySize = 1;                    /* The size of the memory to be allocated */
+    int memoryAddress;                     /* The memory address of the directive */
+    int labelIndex;
+
+    char * binary = NULL;                  /* String to store the binary representation of the decimal number */
+
+    bool alsoRegister = False;
+
+    AddressingMode operand1AddressingMode;
+    AddressingMode operand2AddressingMode;
+
+    /* Allocate memory for the binary string */
+
+    char firstWordbinaryCode[15] = ""; 
+    char secondWordbinaryCode[15] = ""; 
+    char thirdWordbinaryCode[15] = ""; 
+    char fourthWordbinaryCode[15] = ""; 
+    char fifthWordbinaryCode[15] = ""; 
+
+    bool hasSecondWord = False;
+    bool hasThirdWord = False;
+    bool hasFourthWord = False;
+    bool hasFifthWord = False;
+    
+    char labelName[MAX_LABEL_LENGTH];
+    char instruction[4];
+
+    /* Skip leading whitespaces */
+    while (*line && (*line == ' ' || *line == '\t')) {
+        line++;
+    }
+
+    strcat(firstWordbinaryCode,  "0000");
+
+    if(hasLabel(line)){
+
+        splitedLine = splitString(line, ":", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        strcpy(labelName, splitedLine[0]);
+
+        freeStringArray(splitedLine, numberOfElements);
+        
+    }
+
+    strcat(labelName, ":");
+    removeSubstring(line, labelName);
+    removeSubstring(labelName, ":");
+
+    numberOfElements = 0;
+    removeLeadingSpaces(line);
+
+    splitedLine = splitString(line, " ", &numberOfElements);
+    strcpy(instruction, splitedLine[0]);
+
+    freeStringArray(splitedLine, numberOfElements);
+    removeWhiteSpaces(instruction);
+
+    removeSubstring(line, instruction);
+    strcat(firstWordbinaryCode, ht_search(instructionsHash, instruction));
+
+
+    if (strcmp(instruction, "mov") == 0 || strcmp(instruction, "cmp") == 0 || strcmp(instruction, "add") == 0 ||
+        strcmp(instruction, "sub") == 0 || strcmp(instruction, "lea") == 0) {
+
+
+            removeLeadingSpaces(line);
+            numberOfElements = 0;
+            splitedLine = splitString(line, ",", &numberOfElements);
+
+            operand1AddressingMode = analyzeAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
+            operand2AddressingMode = analyzeAddressingMode(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash);
+
+            if(operand1AddressingMode == IMMEDIATE){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "00");
+
+                hasSecondWord = True;
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_imidiate_data(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+                strcat(secondWordbinaryCode, binary);
+                strcat(secondWordbinaryCode, "00");
+                free(binary);
+            }
+
+            else if(operand1AddressingMode == DIRECT){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "01");
+
+                hasSecondWord = True;
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_label_address(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+                strcat(secondWordbinaryCode, binary);
+                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                    strcat(secondWordbinaryCode, "01");
+                }
+                else{
+                    strcat(secondWordbinaryCode, "10");
+                }
+                free(binary);
+
+            }
+
+            else if(operand1AddressingMode == INDEX){
+                memorySize += 2;
+                strcat(firstWordbinaryCode, "10");
+
+                hasSecondWord = True;
+                hasThirdWord = True;
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_indexed_label_address(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash, &labelIndex), 12, binary);
+                strcat(secondWordbinaryCode, binary);
+                free(binary);
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(labelIndex, 12, binary);
+                strcat(thirdWordbinaryCode, binary);
+
+                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                    strcat(secondWordbinaryCode, "01");
+                    strcat(thirdWordbinaryCode, "00");
+                }
+                else{
+                    strcat(secondWordbinaryCode, "10");
+                    strcat(thirdWordbinaryCode, "00");
+                }
+
+                free(binary);
+
+            }
+
+            else if(operand1AddressingMode == REGISTER){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "11");
+
+                hasSecondWord = True;
+                strcat(secondWordbinaryCode, "000000");
+                strcat(secondWordbinaryCode, ht_search(registersHash, splitedLine[0]));                
+
+
+            }
+
+            if(operand2AddressingMode == IMMEDIATE){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "00");
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_imidiate_data(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+
+                if(operand1AddressingMode != INDEX){
+                    hasThirdWord = True;
+                    strcat(thirdWordbinaryCode, binary);
+                    strcat(thirdWordbinaryCode, "00");
+                }
+
+                else{
+                    hasFourthWord = True;
+                    strcat(fourthWordbinaryCode, binary);
+                    strcat(fourthWordbinaryCode, "00");
+                }
+
+                free(binary);
+
+            }
+
+            else if(operand2AddressingMode == DIRECT){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "01");
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_imidiate_data(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+                if(operand1AddressingMode != INDEX){
+                    hasThirdWord = True;
+                    strcat(thirdWordbinaryCode, binary);
+                    
+                    if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                        strcat(thirdWordbinaryCode, "01");
+                    }
+                    else{
+                        strcat(thirdWordbinaryCode, "10");
+                    }
+                }
+
+                else{
+                    hasFourthWord = True;
+                    strcat(fourthWordbinaryCode, binary);
+                    if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                        strcat(fourthWordbinaryCode, "01");
+                    }
+                    else{
+                        strcat(fourthWordbinaryCode, "10");
+                    }
+                }
+                free(binary);
+
+            }
+
+            else if(operand2AddressingMode == INDEX){
+                memorySize += 2;
+                strcat(firstWordbinaryCode, "10");
+                binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                decimalToBinary(get_indexed_label_address(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash, &labelIndex), 12, binary);
+                if(operand1AddressingMode != INDEX){
+                    hasThirdWord = True;
+                    hasFourthWord = True;
+                    strcat(thirdWordbinaryCode, binary);
+                    free(binary);
+                    binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                    decimalToBinary(labelIndex, 12, binary);
+                    strcat(fourthWordbinaryCode, binary);
+                    free(binary);
+                    if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                        strcat(thirdWordbinaryCode, "01");
+                        strcat(fourthWordbinaryCode, "00");
+                    }
+                    else{
+                        strcat(thirdWordbinaryCode, "10");
+                        strcat(fourthWordbinaryCode, "00");
+                    }
+                }
+
+                else{
+                    hasFourthWord = True;
+                    hasFifthWord = True;
+                    strcat(fourthWordbinaryCode, binary);
+                    free(binary);
+                    binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+                    decimalToBinary(labelIndex, 12, binary);
+                    strcat(fifthWordbinaryCode, binary);
+                    free(binary);
+                    if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                        strcat(fourthWordbinaryCode, "01");
+                        strcat(fifthWordbinaryCode, "00");
+                    }
+                    else{
+                        strcat(fourthWordbinaryCode, "10");
+                        strcat(fifthWordbinaryCode, "00");
+                    }
+                }
+
+            }
+
+            else if(operand2AddressingMode == REGISTER){
+                memorySize += 1;
+                strcat(firstWordbinaryCode, "11");
+                if(operand1AddressingMode == REGISTER){
+                    alsoRegister = True;
+                }
+
+                if(alsoRegister == False){
+                    if(operand1AddressingMode != INDEX){
+
+                        hasThirdWord = True;
+                        strcat(thirdWordbinaryCode, "000000");
+                        strcat(thirdWordbinaryCode, ht_search(registersHash, splitedLine[1]));
+                        strcat(thirdWordbinaryCode, "00");
+                    }
+
+                    else{
+                        hasFourthWord = True;
+                        strcat(fourthWordbinaryCode, "000000");
+                        strcat(fourthWordbinaryCode, ht_search(registersHash, splitedLine[1]));
+                        strcat(fourthWordbinaryCode, "00");
+                    }
+                }
+
+            }
+
+            /* If both operands are registers, then the memory size should be decreased by 1 */
+            if(operand1AddressingMode == REGISTER && operand2AddressingMode == REGISTER){
+                memorySize -= 1;
+                hasThirdWord = False;
+                strcat(secondWordbinaryCode, ht_search(registersHash, splitedLine[1]));
+                strcat(secondWordbinaryCode, "00");
+            }
+
+            if(operand1AddressingMode == REGISTER && operand2AddressingMode != REGISTER){
+                strcat(secondWordbinaryCode, "00000");
+            }
+
+
+            freeStringArray(splitedLine, numberOfElements);
+
+    }
+
+    else if (strcmp(instruction, "not") == 0 || strcmp(instruction, "clr") == 0 || strcmp(instruction, "inc") == 0 ||
+               strcmp(instruction, "dec") == 0 || strcmp(instruction, "jmp") == 0 || strcmp(instruction, "bne") == 0 ||
+               strcmp(instruction, "red") == 0 || strcmp(instruction, "prn") == 0 || strcmp(instruction, "jsr") == 0) {
+
+
+        removeLeadingSpaces(line);
+        numberOfElements = 0;
+        splitedLine = splitString(line, " ", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+        operand1AddressingMode = analyzeAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
+
+        strcat(firstWordbinaryCode, "00");
+
+        if(operand1AddressingMode == IMMEDIATE){
+            strcat(firstWordbinaryCode, "00");
+            memorySize += 1;
+
+            hasSecondWord = True;
+            binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+            decimalToBinary(get_imidiate_data(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+            strcat(secondWordbinaryCode, binary);
+            strcat(secondWordbinaryCode, "00");
+            free(binary);
+
+        }
+
+        else if(operand1AddressingMode == DIRECT){
+            strcat(firstWordbinaryCode, "01");
+            memorySize += 1;
+
+            hasSecondWord = True;
+            binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+            decimalToBinary(get_label_address(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
+            strcat(secondWordbinaryCode, binary);
+            if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                strcat(secondWordbinaryCode, "01");
+            }
+            else{
+                strcat(secondWordbinaryCode, "10");
+            }
+            free(binary);
+
+        }
+
+        else if(operand1AddressingMode == INDEX){
+            strcat(firstWordbinaryCode, "10");
+            memorySize += 2;
+            hasSecondWord = True;
+            hasThirdWord = True;
+            binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+            decimalToBinary(get_indexed_label_address(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash, &labelIndex), 12, binary);
+            strcat(secondWordbinaryCode, binary);
+            free(binary);
+            binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
+            decimalToBinary(labelIndex, 12, binary);
+            strcat(thirdWordbinaryCode, binary);
+            free(binary);
+        }
+
+        /* Must be REGISTER mode*/
+        else{
+            strcat(firstWordbinaryCode, "11");
+            memorySize += 1;
+            hasSecondWord = True;
+            strcat(secondWordbinaryCode, "0000000000");
+            strcat(secondWordbinaryCode, ht_search(registersHash, splitedLine[0]));
+            strcat(secondWordbinaryCode, "00");
+        }
+
+        freeStringArray(splitedLine, numberOfElements);
+
+    }
+
+    else if (strcmp(instruction, "rts") == 0 || strcmp(instruction, "hlt") == 0) {
+        strcat(firstWordbinaryCode, "0000");
+    }
+
+    strcat(firstWordbinaryCode, "00");
+
+    memoryAddress = *currentMemoryAddress;
+
+    printf("operand1AddressingMode: %d\n", operand1AddressingMode);
+    printf("operand2AddressingMode: %d\n", operand2AddressingMode);
+    printf("firstWordbinaryCode: %s\n", firstWordbinaryCode);
+    printf("Memory Address: %d\n", memoryAddress);
+
+    fprintf(outputFile, "%04d ", *currentMemoryAddress);
+    fputs(firstWordbinaryCode, outputFile);
+    fputs("\n", outputFile);
+
+    if(hasSecondWord){
+        printf("secondWordbinaryCode: %s\n", secondWordbinaryCode);
+        fprintf(outputFile, "%04d ", *currentMemoryAddress + 1);
+        fputs(secondWordbinaryCode, outputFile);
+        fputs("\n", outputFile);
+    }
+
+    if(hasThirdWord){
+        printf("thirdWordbinaryCode: %s\n", thirdWordbinaryCode);
+        fprintf(outputFile, "%04d ", *currentMemoryAddress + 2);
+        fputs(thirdWordbinaryCode, outputFile);
+        fputs("\n", outputFile);
+    }
+
+    if(hasFourthWord){
+        printf("fourthWordbinaryCode: %s\n", fourthWordbinaryCode);
+        fprintf(outputFile, "%04d ", *currentMemoryAddress + 3);
+        fputs(fourthWordbinaryCode, outputFile);
+        fputs("\n", outputFile);
+    }
+
+    if(hasFifthWord){
+        printf("fifthWordbinaryCode: %s\n", fifthWordbinaryCode);
+        fprintf(outputFile, "%04d ", *currentMemoryAddress + 4);
+        fputs(fifthWordbinaryCode, outputFile);
+        fputs("\n", outputFile);
+    }
+
+    *currentMemoryAddress += memorySize;
+
+    return;
+
+
+}
+
+int get_imidiate_data(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash){
+
+        char **splitedLine;                    /* Array to store the splited line */
+        int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+        int value;                         /* The value of the immediate data */
+        cleanCommand(operand);
+
+        if (operand[0] == '#') {
+
+            splitedLine = splitString(operand, "#", &numberOfElements);
+            printStringArray(splitedLine, numberOfElements);
+
+            if(isValidInteger(splitedLine[0])){
+                printf("valid integer %s\n", splitedLine[0]);
+                value = stringToInt(splitedLine[0]);
+                freeStringArray(splitedLine, numberOfElements);
+                return value;
+            }
+
+            else if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "constant") == 0){
+                printf("valid constant\n");
+                value = stringToInt(ht_search(symbolsLabelsValuesHash, splitedLine[0]));
+                freeStringArray(splitedLine, numberOfElements);
+                return value;
+            }
+
+        }
+
+        printf("Error: invalid immediate data\n");
+
+        return 0;
+}
+
+int get_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash){
+
+    cleanCommand(label);
+    printf("label: %s\n", label);
+
+    if (ht_search(symbolsLabelsValuesHash, label) != NULL && (strcmp(ht_get_type(symbolsLabelsValuesHash, label), "dataDirective") == 0 ||
+                                                              strcmp(ht_get_type(symbolsLabelsValuesHash, label), "stringDirective") == 0 ||
+                                                              strcmp(ht_get_type(symbolsLabelsValuesHash, label), "instruction") == 0)){
+            printf("direct label\n");
+            return stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, label));
+
+    }        
+
+    else if(ht_search(entriesExternsHash, label) != NULL){
+        printf("extern label\n");
+        return 0;
+    }
+
+        return 0;
+}
+
+int get_indexed_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, int * index){
+
+    char **splitedLine;                    /* Array to store the splited line */
+    int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
+    int address;                           /* The address of the indexed label */
+
+    if (strchr(label, '[') != NULL && strchr(label, ']') != NULL) {
+
+            splitedLine = splitString(label, "[", &numberOfElements);
+            removeSubstring(splitedLine[1], "]");
+            
+            if(ht_search(symbolsLabelsValuesHash,splitedLine[0]) != NULL && (strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "dataDirective") == 0 || strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "stringDirective") == 0)){
+                if(isValidInteger(splitedLine[1])){
+
+                    *index = stringToInt(splitedLine[1]);
+                    address = stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, splitedLine[0]));
+                    freeStringArray(splitedLine, numberOfElements);
+                    return address;
+                }
+
+                else if (ht_search(symbolsLabelsValuesHash, splitedLine[1]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[1]), "constant") == 0){
+
+                    *index = stringToInt(ht_search(symbolsLabelsValuesHash, splitedLine[1]));
+                    address = stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, splitedLine[0]));
+                    freeStringArray(splitedLine, numberOfElements);
+                    return address;
+                }
+
+            }
+
+            else{
+                
+                printf("extern label\n");
+                if(isValidInteger(splitedLine[1])){
+
+                    *index = stringToInt(splitedLine[1]);
+                    freeStringArray(splitedLine, numberOfElements);
+                    return 0;
+                }
+
+                else if (ht_search(symbolsLabelsValuesHash, splitedLine[1]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[1]), "constant") == 0){
+
+                    *index = stringToInt(ht_search(symbolsLabelsValuesHash, splitedLine[1]));
+                    freeStringArray(splitedLine, numberOfElements);
+                    return 0;
+                }
+
+                return 0;
+            }
+    }
+
+    return 0;
+}
+
+
+
 
 
 

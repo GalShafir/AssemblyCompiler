@@ -402,6 +402,22 @@ int countCharacters(const char *str) {
 }
 
 
+void joinStrings(char** str1, const char* str2) {
+    /* Calculate the new size required for the combined string */
+    size_t new_size = strlen(*str1) + strlen(str2) + 1;
+
+    /* Reallocate memory for str1 to accommodate str2 */
+    *str1 = realloc(*str1, new_size);
+    if (*str1 == NULL) {
+        /* Handle memory allocation failure */
+        perror("Memory reallocation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Concatenate str2 to the end of str1 */
+    strcat(*str1, str2);
+}
+
 
 unsigned long hash_function(char *str)
 {
