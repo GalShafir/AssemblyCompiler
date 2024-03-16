@@ -7,11 +7,13 @@ void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabe
 void calculate_string_directive_memory_address(char * line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, int * currentMemoryAddress);
 void calculate_instruction_memory_address(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, int * currentMemoryAddress);
 AddressingMode analyzeAddressingMode(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);
-void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, FILE *outputFile);
-void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, FILE *outputFile);
-void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, HashTable *registersHash, FILE *outputFile, int * currentMemoryAddress);
+void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, FILE *outputFile, FILE *entryFile, FILE *externFile);
+void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, FILE *outputFile, FILE *entryFile, FILE *externFile);
+void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, HashTable *registersHash, FILE *outputFile, FILE *entryFile, FILE *externFile, int * currentMemoryAddress);
 int get_imidiate_data(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);
 int get_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);
 int get_indexed_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, int * index);
 char* encodeBinaryString(const char* binaryString);
 int get_directives_memory_size(HashTable *table);
+bool entryExists(HashTable *table);
+bool externExists(HashTable *table);
