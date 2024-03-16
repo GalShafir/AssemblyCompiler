@@ -104,6 +104,80 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
 
     }
 
+    fclose(inputFile);
+    fclose(outputFile);
+
+}
+
+void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, int currentMemoryAddress){
+
+    FILE *tempFile = NULL;                 /* File pointer for the input file */
+    FILE *outputFile = NULL;                /* File pointer for the output file */
+
+    char **splitedLine;                     /* Array to store the splited line */
+    int numberOfElements = 0;               /* Reset the elemnts number - for the string spliter counter */
+
+    char line[MAX_LINE_LENGTH];             /* Buffer to store each line from the file */
+    char tempFileName[MAX_LINE_LENGTH];     /* Buffer to store the output file name */
+    char outputFileName[MAX_LINE_LENGTH];   /* Buffer to store the output file name */
+
+    char * encodedBinary = NULL;            /* String to store the encoded representation of the binary string */
+    char * directiveMemorySizeString = NULL;         /* String to store the memory size */
+    char * instructionMemorySizeString = NULL;         /* String to store the memory size */
+
+    sprintf(tempFileName, "%s.temp", removeFileExtension(inputFileName));
+
+    /* Open the input file */
+    tempFile = openFile(tempFileName, "r");
+
+    /* Open a new file with the same name but a ".ob" extension for writing */
+    sprintf(outputFileName, "%s.ob", removeFileExtension(inputFileName));
+    outputFile = openFile(outputFileName, "w");
+
+    directiveMemorySizeString = intToString(get_directives_memory_size(symbolsLabelsValuesHash));
+    instructionMemorySizeString = intToString(currentMemoryAddress - get_directives_memory_size(symbolsLabelsValuesHash) - STARTING_MEMORY_LOCATION);
+
+    fputs("  ", outputFile);
+    fputs(instructionMemorySizeString, outputFile);
+    fputs(" ", outputFile);
+    fputs(directiveMemorySizeString, outputFile);
+    fputs("\n", outputFile);
+
+    printf("instructionMemorySizeString: %s\n", instructionMemorySizeString);
+    printf("directiveMemorySizeString: %s\n", directiveMemorySizeString);
+
+    free(directiveMemorySizeString);
+    free(instructionMemorySizeString);
+
+
+
+    printf("---------------------- Decode file ----------------------\n");
+
+    while (fgets(line, sizeof(line), tempFile) != NULL) {
+
+        splitedLine = splitString(line, " ", &numberOfElements);
+        printStringArray(splitedLine, numberOfElements);
+
+        encodedBinary = encodeBinaryString(splitedLine[1]);
+
+        fputs(splitedLine[0], outputFile);
+        fputs(" ", outputFile);
+        fputs(encodedBinary, outputFile);
+        fputs("\n", outputFile);
+
+        free(encodedBinary);
+        freeStringArray(splitedLine, numberOfElements);
+
+    }
+
+    fclose(tempFile);
+    fclose(outputFile);
+
+    /* Attempt to delete the file */
+    if (remove(tempFileName) != 0) {
+        perror("Error deleting file");
+    }
+
 
 
 }
@@ -1126,6 +1200,68 @@ int get_indexed_label_address(char *label, HashTable *symbolsLabelsValuesHash, H
 
     return 0;
 }
+
+/**
+ * Transforms a binary string by replacing each pair of bits with a corresponding symbol.
+ * '00' is replaced with '*', '01' with '#', '10' with '%', and '11' with '!'.
+ * 
+ * @param binaryString The input binary string to transform.
+ * @return The transformed string. Memory is dynamically allocated and should be freed by the caller.
+ */
+char* encodeBinaryString(const char* binaryString) {
+
+    size_t i;
+    size_t length = strlen(binaryString);
+    char* transformedString = (char*)malloc((length + 1) * sizeof(char)); /* +1 for null terminator */
+    if (transformedString == NULL) {
+        fprintf(stderr, "Memory allocation failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (i = 0; i < length; i += 2) {
+        if (binaryString[i] == '0') {
+            if (binaryString[i + 1] == '0') {
+                transformedString[i / 2] = '*';
+            } else if (binaryString[i + 1] == '1') {
+                transformedString[i / 2] = '#';
+            }
+        } else if (binaryString[i] == '1') {
+            if (binaryString[i + 1] == '0') {
+                transformedString[i / 2] = '%';
+            } else if (binaryString[i + 1] == '1') {
+                transformedString[i / 2] = '!';
+            }
+        }
+    }
+
+    transformedString[length / 2] = '\0'; /* Null-terminate the transformed string */
+    return transformedString;
+}
+
+int get_directives_memory_size(HashTable *table){
+
+    int i, j, order;
+    int totalMemorySize = 0;
+
+    for (j = 0; j < table -> size; j++){
+
+        for (i = 0; i < table -> size; i++)
+        {
+            if ((table -> items[i]) && (table -> items[i] -> order != NULL)){
+                order = stringToInt(table -> items[i] -> order);
+                if (order == j && (strcmp(table -> items[i] -> type, "dataDirective") == 0 || strcmp(table -> items[i] -> type, "stringDirective") == 0))
+                {
+                    totalMemorySize += stringToInt(table -> items[i] -> memorySize);
+                }
+            }
+        }
+    }
+
+    return totalMemorySize;
+}
+
+
+
 
 
 

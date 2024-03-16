@@ -182,12 +182,16 @@ void processFile(char *inputFileName) {
         calculate_memory_addresses_for_directives(commandType, line, symbolsLabelsValuesHash, &directiveOrder, entriesExternsHash,&currentMemoryAddress);
     }
 
+    /* Close the input file */
     fclose(inputFile);
+    
     printf("------------------------------------------- Binary File Creation -------------------------------------------\n");
     build_binary_file(inputFileName, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, registersHash);
 
 
 
+    printf("------------------------------------------- Encoded file creation -------------------------------------------\n");
+    build_encoded_file(inputFileName, symbolsLabelsValuesHash, currentMemoryAddress);
 
 
     print_table(symbolsLabelsValuesHash);
@@ -199,11 +203,7 @@ void processFile(char *inputFileName) {
     free_table(instructionsHash);
     free_table(symbolsLabelsValuesHash);
     free_table(entriesExternsHash);
-
-
-    /* Close the input file */
-    fclose(inputFile);
-
+    free_table(registersHash);
 
 
 }

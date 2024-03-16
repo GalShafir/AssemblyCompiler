@@ -1,6 +1,7 @@
 void calculate_memory_addresses_for_instructions(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, int * currentMemoryAddress);
 void calculate_memory_addresses_for_directives(CommandType commandType, char *line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, int * currentMemoryAddress);
 void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, HashTable *instructionsHash, HashTable *registersHash);
+void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash, int currentMemoryAddress);
 void decimalToBinary(int decimal, int numBits, char *binary);
 void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, int * currentMemoryAddress);
 void calculate_string_directive_memory_address(char * line, HashTable *symbolsLabelsValuesHash, int * directiveOrder, int * currentMemoryAddress);
@@ -12,3 +13,5 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 int get_imidiate_data(char *operand, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);
 int get_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash);
 int get_indexed_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash, int * index);
+char* encodeBinaryString(const char* binaryString);
+int get_directives_memory_size(HashTable *table);
