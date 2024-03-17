@@ -17,20 +17,17 @@ int compile(char * fileName){
 
     strcpy(manipulatedFileName, fileName);
 
-    /**
-    HashTable *instructionsHash        = create_table(HT_CAPACITY);
-    HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY);
-    HashTable *symbolsLabelsMemoryHash = create_table(HT_CAPACITY);
-    */
 
     /* Add the ".as" extension to the input file name */
     sprintf(manipulatedFileName, "%s.as", manipulatedFileName);
 
     /* Check the file even exists */
     inputFile = openFile(manipulatedFileName, "r");
+
     if (inputFile == NULL) {
         return 1;
     }
+
     else {
         fclose(inputFile);
     }
@@ -41,29 +38,36 @@ int compile(char * fileName){
     /* Process the pre-processed file */
     sprintf(PreProcessedFileName, "%s.am", removeFileExtension(manipulatedFileName));
 
+    /* Print the file being processed */
     printf("Processing file %s...\n", PreProcessedFileName);
 
+    /* Process the file */
     processFile(PreProcessedFileName);
-
-
 
     return EXIT_SUCCESS;
 }
 
+/** Process the File
+ *
+ * This function processes the input assembly file and creates the binary and encoded files.
+ *
+ * @param inputFileName - Name of the input assembly file.
+ */
+ 
 void processFile(char *inputFileName) {
 
-    char line[MAX_LINE_LENGTH];             /* Buffer to store each line from the file */
-    FILE *inputFile = NULL;                 /* File pointer for the input file */
-    CommandType commandType;                /* Type of the command in the line */
-    int lineNumber = 0;                    /* Counter for the line number */
-    int directiveOrder = 0;               /* Counter for the directive order */
-    bool foundError = False;              /* Flag to indicate if an error was found */
-    int currentMemoryAddress = STARTING_MEMORY_LOCATION;       /* Counter for the current memory address */
+    char line[MAX_LINE_LENGTH];                                            /* Buffer to store each line from the file */
+    FILE *inputFile = NULL;                                                /* File pointer for the input file */
+    CommandType commandType;                                               /* Type of the command in the line */
+    int lineNumber = 0;                                                    /* Counter for the line number */
+    int directiveOrder = 0;                                                /* Counter for the directive order */
+    bool foundError = False;                                               /* Flag to indicate if an error was found */
+    int currentMemoryAddress = STARTING_MEMORY_LOCATION;                   /* Counter for the current memory address */
     
-    HashTable *instructionsHash = create_table(HT_CAPACITY); /* Create the instruction table */
-    HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY); /* Create the symbols-labels values table */
-    HashTable *entriesExternsHash = create_table(HT_CAPACITY); /* Create the entries-externs table */
-    HashTable *registersHash = create_table(HT_CAPACITY); /* Create the registers table */
+    HashTable *instructionsHash        = create_table(HT_CAPACITY);        /* Create the instruction table */
+    HashTable *symbolsLabelsValuesHash = create_table(HT_CAPACITY);        /* Create the symbols-labels values table */
+    HashTable *entriesExternsHash      = create_table(HT_CAPACITY);        /* Create the entries-externs table */
+    HashTable *registersHash           = create_table(HT_CAPACITY);        /* Create the registers table */
 
     createInstructionTable(instructionsHash);
     createRegistersTable(registersHash);
@@ -76,7 +80,7 @@ void processFile(char *inputFileName) {
         return;
     }
 
-    printf("------------------------------------------- Directive errors -------------------------------------------\n");
+    /* "------------------------------------------- Directive errors ------------------------------------------- */
 
     /* Read lines from the input file - first iteration for error checking */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -98,7 +102,9 @@ void processFile(char *inputFileName) {
     lineNumber = 0;  
 
     /* Read lines from the input file - second iteration for checking externs and entries (because entry can be declared before the actual) */
-    printf("------------------------------------------- Entries / Exters errors -------------------------------------------\n");
+
+    /* ------------------------------------------- Entries / Exters errors ------------------------------------------- */
+
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
@@ -117,7 +123,7 @@ void processFile(char *inputFileName) {
     /* Reset the line number */
     lineNumber = 0;  
 
-    printf("------------------------------------------- Instructions errors -------------------------------------------\n");
+    /* ------------------------------------------- Instructions errors ------------------------------------------- */
 
     /* Read lines from the input file - third iteration for checking instructions errors after we have the symbols labels hash */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -131,6 +137,7 @@ void processFile(char *inputFileName) {
         check_instruction_errors(commandType, line, lineNumber, inputFileName, entriesExternsHash, symbolsLabelsValuesHash, &foundError);
     }
 
+    /* if there are errors, free the memory and return */
     if (foundError == True) {
         free_table(instructionsHash);
         free_table(symbolsLabelsValuesHash);
@@ -147,7 +154,7 @@ void processFile(char *inputFileName) {
     /* Reset the line number */
     lineNumber = 0; 
     directiveOrder = 0;
-    printf("------------------------------------------- Memory Calculations -------------------------------------------\n");
+    /* ------------------------------------------- Memory Calculations ------------------------------------------- */
 
     /* Read lines from the input file - Get the address memory for each instruction line - now we know there are no syntax errors */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -168,7 +175,7 @@ void processFile(char *inputFileName) {
     /* Reset the line number */
     lineNumber = 0; 
     directiveOrder = 0;
-    printf("------------------------------------------- Memory Calculations -------------------------------------------\n");
+    /* ------------------------------------------- Memory Calculations ------------------------------------------- */
 
     /* Read lines from the input file - Get the address memory for each directive line - now we know there are no syntax errors */
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -185,21 +192,15 @@ void processFile(char *inputFileName) {
     /* Close the input file */
     fclose(inputFile);
     
-    printf("------------------------------------------- Binary File Creation -------------------------------------------\n");
+    /* ------------------------------------------- Binary File Creation ------------------------------------------- */
     build_binary_file(inputFileName, symbolsLabelsValuesHash, entriesExternsHash, instructionsHash, registersHash);
 
 
 
-    printf("------------------------------------------- Encoded file creation -------------------------------------------\n");
+    /* ------------------------------------------- Encoded file creation ------------------------------------------- */
     build_encoded_file(inputFileName, symbolsLabelsValuesHash, currentMemoryAddress);
 
-
-    print_table(symbolsLabelsValuesHash);
-    print_directives_by_order(symbolsLabelsValuesHash);
-    print_table(entriesExternsHash);
-
-
-
+    /* Free the memory */
     free_table(instructionsHash);
     free_table(symbolsLabelsValuesHash);
     free_table(entriesExternsHash);
@@ -235,6 +236,13 @@ void createInstructionTable(HashTable* mp){
     ht_insert(mp, "hlt", "1111", "instruction", "no address", "no size", "no order");
 }
 
+/** Create the Registers Table
+ *
+ * This function creates the registers table and stores it in a hash map.
+ *
+ * @param mp - Pointer to the hash map to store the registers table.
+ */
+
 void createRegistersTable(HashTable* mp){
 
     ht_insert(mp, "r0", "000",  "register", "no address", "no size", "no order");
@@ -246,6 +254,13 @@ void createRegistersTable(HashTable* mp){
     ht_insert(mp, "r6", "110",  "register", "no address", "no size", "no order");
     ht_insert(mp, "r7", "111",  "register", "no address", "no size", "no order");
 }
+
+/** print directives by order
+ *
+ * This function prints the directives by order.
+ *
+ * @param table - Pointer to the hash map to store the directives table.
+ */
 
 void print_directives_by_order(HashTable *table)
 {

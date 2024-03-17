@@ -7,7 +7,6 @@
 
 
 int preProcessFile(char * fileName) {
-    printf("Pre-processing file %s...\n", fileName);
     processMacros(fileName);
     return 0;
 }

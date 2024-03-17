@@ -202,7 +202,6 @@ bool isInstruction(char *line, HashTable* instructionsHash) {
     freeStringArray(splitedLine, numberOfElements);
 
     /* Compare instruction name */
-    printf("Got the instruction: %s\n", instruction);
     if (existsInHash(instructionsHash, instruction)) {
         return True;
     }
@@ -266,9 +265,7 @@ bool isConstant(char *line) {
 
 CommandType identifyCommandType(char *line, HashTable* instructionsHash) {
 
-    printf("Line before cleaning: %s\n", line);
     cleanCommand(line);
-    printf("Line after cleaning: %s\n", line);
 
     if (isEmpty(line)) {
         return EMPTY;
@@ -295,10 +292,8 @@ AddressingMode identifyAddressingMode(char *operand, HashTable *symbolsLabelsVal
     cleanCommand(operand);
 
     /* If the operand starts with a '#' suspect immediate addressing mode */
-    printf("Operand: %s\n", operand);
     if (operand[0] == '#') {
         splitedLine = splitString(operand, "#", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         if(isValidInteger(splitedLine[0])){
             freeStringArray(splitedLine, numberOfElements);
@@ -369,9 +364,6 @@ AddressingMode identifyAddressingMode(char *operand, HashTable *symbolsLabelsVal
 
 
         else{
-            printf("#######");
-            printStringArray(splitedLine, numberOfElements);
-
             freeStringArray(splitedLine, numberOfElements);
             return UNDEFINED_LABEL;
         }

@@ -73,9 +73,6 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
     sprintf(externFileName, "%s.ext", removeFileExtension(inputFileName));
     externFile = openFile(externFileName, "w");
 
-
-    printf("---------------------- binary instruction ----------------------\n");
-
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         /* Identify the command type */
@@ -92,8 +89,6 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
     /* Move the file pointer to the beginning of the file */
 
     rewind(inputFile);
-
-    printf("---------------------- binary data directive ----------------------\n");
 
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
@@ -170,20 +165,14 @@ void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash
     fputs(directiveMemorySizeString, outputFile);
     fputs("\n", outputFile);
 
-    printf("instructionMemorySizeString: %s\n", instructionMemorySizeString);
-    printf("directiveMemorySizeString: %s\n", directiveMemorySizeString);
 
     free(directiveMemorySizeString);
     free(instructionMemorySizeString);
 
 
-
-    printf("---------------------- Decode file ----------------------\n");
-
     while (fgets(line, sizeof(line), tempFile) != NULL) {
 
         splitedLine = splitString(line, " ", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         encodedBinary = encodeBinaryString(splitedLine[1]);
 
@@ -270,7 +259,6 @@ void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabe
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         strcpy(labelName, splitedLine[0]);
         strcpy(value, splitedLine[1]);
@@ -285,7 +273,6 @@ void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabe
     removeWhiteSpaces(line);
 
     splitedLine = splitString(line, ",", &numberOfElements);
-    printStringArray(splitedLine, numberOfElements);
 
     for (i = 0; i < numberOfElements; i++) {
 
@@ -366,7 +353,6 @@ void calculate_string_directive_memory_address(char * line, HashTable *symbolsLa
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
 
 
@@ -441,7 +427,6 @@ void calculate_instruction_memory_address(char * line, HashTable *symbolsLabelsV
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         strcpy(labelName, splitedLine[0]);
 
@@ -526,7 +511,6 @@ void calculate_instruction_memory_address(char * line, HashTable *symbolsLabelsV
         removeLeadingSpaces(line);
         numberOfElements = 0;
         splitedLine = splitString(line, " ", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
         operand1AddressingMode = analyzeAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
 
         freeStringArray(splitedLine, numberOfElements);
@@ -556,12 +540,6 @@ void calculate_instruction_memory_address(char * line, HashTable *symbolsLabelsV
     *currentMemoryAddress += memorySize;
     memoryAddressString = intToString(memoryAddress);
 
-    printf("originalLine: %s\n", originalLine);
-    printf("operand1AddressingMode: %d\n", operand1AddressingMode);
-    printf("operand2AddressingMode: %d\n", operand2AddressingMode);
-    printf("Memory Address: %s\n", memoryAddressString);
-    printf("Memory Size: %s\n", memorySizeString);
-
     if(hasLabel(originalLine)){
         ht_insert(symbolsLabelsValuesHash, labelName, "NULL", "instruction", memoryAddressString, memorySizeString, "-1");
     }
@@ -578,7 +556,6 @@ AddressingMode analyzeAddressingMode(char *operand, HashTable *symbolsLabelsValu
 
 
     cleanCommand(operand);
-    printf("operand: %s\n", operand);
 
     /* If the operand starts with a '#' suspect immediate addressing mode */
     if (operand[0] == '#') {
@@ -621,7 +598,6 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         strcpy(labelName, splitedLine[0]);
         freeStringArray(splitedLine, numberOfElements);
@@ -640,7 +616,6 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
     numberOfElements = 0;
 
     splitedLine = splitString(value, ",", &numberOfElements);
-    printStringArray(splitedLine, numberOfElements);
 
     for (i = 0; i < numberOfElements; i++) {
 
@@ -650,7 +625,6 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
         fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + i);
         fputs(binary, outputFile);
         fputs("\n", outputFile);
-        printf("binary represtation of %d is %s\n", stringToInt(splitedLine[i]), binary);
         free(binary);
 
     }
@@ -683,7 +657,6 @@ void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, H
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         strcpy(labelName, splitedLine[0]);
         freeStringArray(splitedLine, numberOfElements);
@@ -703,12 +676,10 @@ void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, H
 
         /* Write line to the output file */
         binary = (char *)malloc(14 + 1); /* Allocate memory for the binary string */
-        printf("assci represtation of %c is %d\n", value[i], (int)(value[i]));
         decimalToBinary((int)(value[i]), 14, binary);
         fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + (i - 1));
         fputs(binary, outputFile);
         fputs("\n", outputFile);
-        printf("binary represtation of %d is %s\n", (int)(value[i]), binary);
         counter++;
         free(binary);
 
@@ -730,7 +701,6 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
     int numberOfElements = 0;              /* Reset the elemnts number - for the string spliter counter */
 
     int memorySize = 1;                    /* The size of the memory to be allocated */
-    int memoryAddress;                     /* The memory address of the directive */
     int labelIndex;
 
     char * binary = NULL;                  /* String to store the binary representation of the decimal number */
@@ -766,7 +736,6 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         strcpy(labelName, splitedLine[0]);
 
@@ -839,11 +808,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 
                 free(binary);
 
-                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "entryDirective") == 0){
-                    fprintf(entryFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
-                }
-
-                else if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
                     fprintf(externFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
                 }
 
@@ -875,11 +840,8 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 
                 free(binary);
 
-                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "entryDirective") == 0){
-                    fprintf(entryFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
-                }
 
-                else if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+                if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
                     fprintf(externFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
                 }
 
@@ -924,11 +886,8 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
                 binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
                 decimalToBinary(get_imidiate_data(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash), 12, binary);
 
-                if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "entryDirective") == 0){
-                    fprintf(entryFile, "%s %04d\n", splitedLine[1], (*currentMemoryAddress) + 1);
-                }
 
-                else if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "externDirective") == 0){
+                if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "externDirective") == 0){
                     fprintf(externFile, "%s %04d\n", splitedLine[1], (*currentMemoryAddress) + 1);
                 }
 
@@ -964,11 +923,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
                 binary = (char *)malloc(12 + 1); /* Allocate memory for the binary string */
                 decimalToBinary(get_indexed_label_address(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash, &labelIndex), 12, binary);
 
-                if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "entryDirective") == 0){
-                    fprintf(entryFile, "%s %04d\n", splitedLine[1], (*currentMemoryAddress) + 1);
-                }
-
-                else if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "externDirective") == 0){
+                if(ht_search(entriesExternsHash, splitedLine[1]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[1]), "externDirective") == 0){
                     fprintf(externFile, "%s %04d\n", splitedLine[1], (*currentMemoryAddress) + 1);
                 }
 
@@ -1063,7 +1018,6 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
         removeLeadingSpaces(line);
         numberOfElements = 0;
         splitedLine = splitString(line, " ", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
         operand1AddressingMode = analyzeAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
 
         strcat(firstWordbinaryCode, "00");
@@ -1098,11 +1052,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 
             free(binary);
 
-            if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "entryDirective") == 0){
-                fprintf(entryFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
-            }
-
-            else if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+            if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
                 fprintf(externFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
             }
 
@@ -1122,11 +1072,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
             strcat(thirdWordbinaryCode, binary);
             free(binary);
 
-            if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "entryDirective") == 0){
-                fprintf(entryFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
-            }
-
-            else if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
+            if(ht_search(entriesExternsHash, splitedLine[0]) != NULL && strcmp(ht_get_type(entriesExternsHash, splitedLine[0]), "externDirective") == 0){
                 fprintf(externFile, "%s %04d\n", splitedLine[0], (*currentMemoryAddress) + 1);
             }
 
@@ -1152,40 +1098,29 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 
     strcat(firstWordbinaryCode, "00");
 
-    memoryAddress = *currentMemoryAddress;
-
-    printf("operand1AddressingMode: %d\n", operand1AddressingMode);
-    printf("operand2AddressingMode: %d\n", operand2AddressingMode);
-    printf("firstWordbinaryCode: %s\n", firstWordbinaryCode);
-    printf("Memory Address: %d\n", memoryAddress);
-
     fprintf(outputFile, "%04d ", *currentMemoryAddress);
     fputs(firstWordbinaryCode, outputFile);
     fputs("\n", outputFile);
 
     if(hasSecondWord){
-        printf("secondWordbinaryCode: %s\n", secondWordbinaryCode);
         fprintf(outputFile, "%04d ", *currentMemoryAddress + 1);
         fputs(secondWordbinaryCode, outputFile);
         fputs("\n", outputFile);
     }
 
     if(hasThirdWord){
-        printf("thirdWordbinaryCode: %s\n", thirdWordbinaryCode);
         fprintf(outputFile, "%04d ", *currentMemoryAddress + 2);
         fputs(thirdWordbinaryCode, outputFile);
         fputs("\n", outputFile);
     }
 
     if(hasFourthWord){
-        printf("fourthWordbinaryCode: %s\n", fourthWordbinaryCode);
         fprintf(outputFile, "%04d ", *currentMemoryAddress + 3);
         fputs(fourthWordbinaryCode, outputFile);
         fputs("\n", outputFile);
     }
 
     if(hasFifthWord){
-        printf("fifthWordbinaryCode: %s\n", fifthWordbinaryCode);
         fprintf(outputFile, "%04d ", *currentMemoryAddress + 4);
         fputs(fifthWordbinaryCode, outputFile);
         fputs("\n", outputFile);
@@ -1208,17 +1143,14 @@ int get_imidiate_data(char *operand, HashTable *symbolsLabelsValuesHash, HashTab
         if (operand[0] == '#') {
 
             splitedLine = splitString(operand, "#", &numberOfElements);
-            printStringArray(splitedLine, numberOfElements);
 
             if(isValidInteger(splitedLine[0])){
-                printf("valid integer %s\n", splitedLine[0]);
                 value = stringToInt(splitedLine[0]);
                 freeStringArray(splitedLine, numberOfElements);
                 return value;
             }
 
             else if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "constant") == 0){
-                printf("valid constant\n");
                 value = stringToInt(ht_search(symbolsLabelsValuesHash, splitedLine[0]));
                 freeStringArray(splitedLine, numberOfElements);
                 return value;
@@ -1226,26 +1158,21 @@ int get_imidiate_data(char *operand, HashTable *symbolsLabelsValuesHash, HashTab
 
         }
 
-        printf("Error: invalid immediate data\n");
-
         return 0;
 }
 
 int get_label_address(char *label, HashTable *symbolsLabelsValuesHash, HashTable *entriesExternsHash){
 
     cleanCommand(label);
-    printf("label: %s\n", label);
 
     if (ht_search(symbolsLabelsValuesHash, label) != NULL && (strcmp(ht_get_type(symbolsLabelsValuesHash, label), "dataDirective") == 0 ||
                                                               strcmp(ht_get_type(symbolsLabelsValuesHash, label), "stringDirective") == 0 ||
                                                               strcmp(ht_get_type(symbolsLabelsValuesHash, label), "instruction") == 0)){
-            printf("direct label\n");
             return stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, label));
 
     }        
 
     else if(ht_search(entriesExternsHash, label) != NULL){
-        printf("extern label\n");
         return 0;
     }
 
@@ -1284,7 +1211,6 @@ int get_indexed_label_address(char *label, HashTable *symbolsLabelsValuesHash, H
 
             else{
                 
-                printf("extern label\n");
                 if(isValidInteger(splitedLine[1])){
 
                     *index = stringToInt(splitedLine[1]);

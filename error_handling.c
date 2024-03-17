@@ -11,40 +11,30 @@
 void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, bool * foundError) {
     switch (commandType) {
         case EMPTY:
-            printf("empty line\n");
             break;
         case COMMENT:
-            printf("comment line\n");
             break;
         case DATA_DIRECTIVE:
-            printf("data directive line\n");
             check_data_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder, foundError);
             break;
         case STRING_DIRECTIVE:
-            printf("string directive line\n");
             check_string_directive_error(line, lineNumber, fileName, symbolsLabelsValuesHash, directiveOrder, foundError);
             break;
         case ENTRY_DIRECTIVE:
-            printf("entry directive line\n");
             break;
         case EXTERN_DIRECTIVE:
-            printf("extern directive line\n");
             break;
         case UNDEFINED_DIRECTIVE:
-            printf("undifined directive line\n");
             break;
         case INSTRUCTION:
-            printf("Instruction\n");
             temp_instruction_addition(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash, foundError);
             break;
         case CONSTANT:
-            printf("Constant\n");
             check_constant_error(line, lineNumber, fileName, symbolsLabelsValuesHash, foundError);
             break;
         case UNDEFINED:
             print_error("undefined instruction\n", line, lineNumber, fileName);
             *foundError = True;
-            printf("undefined line\n");
             break;
     }
 }
@@ -286,13 +276,10 @@ void check_constant_error(char *line, int lineNumber, char * fileName, HashTable
     }
 
     /* print line */
-    printf("Line before removal: %s\n", line);
     removeSubstring(line, ".define");
-    printf("Line after removal: %s\n", line);
 
     removeWhiteSpaces(line);
     constantSplitedLine = splitString(line, "=", &constantNumberOfElements);
-    printStringArray(constantSplitedLine, constantNumberOfElements);
     if(constantNumberOfElements != 2){
         print_error("Invalid constant definition\n", originalLine, lineNumber, fileName);
         *foundError = True;
@@ -362,15 +349,12 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
     }
 
     /* print line */
-    printf("Line before removal: %s\n", line);
     removeSubstring(line, ".data");
-    printf("Line after removal: %s\n", line);
 
 
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Directive is already defined\n", originalLine, lineNumber, fileName);
@@ -407,7 +391,6 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
     }
 
     splitedLine = splitString(line, ",", &numberOfElements);
-    printStringArray(splitedLine, numberOfElements);
 
     for (i = 0; i < numberOfElements; i++) {
 
@@ -432,9 +415,6 @@ void check_data_directive_error(char * line, int lineNumber, char * fileName,  H
 
     }
     removeLastCharacter(variableValue);
-    printf("\noriginalLine: %s\n", originalLine);
-    printf("value: %s\n", variableValue);
-    printf("labelName: %s\n\n", labelName);
 
     
     if(hasLabel(originalLine)){
@@ -498,15 +478,12 @@ void check_string_directive_error(char * line, int lineNumber, char * fileName, 
     }
 
     /* print line */
-    printf("Line before removal: %s\n", line);
     removeSubstring(line, ".string");
-    printf("Line after removal: %s\n", line);
 
 
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Directive is already defined\n", originalLine, lineNumber, fileName);
@@ -594,15 +571,11 @@ void check_entry_directive_error(char * line, int lineNumber, char * fileName, H
     }
 
     /* print line */
-    printf("Line before removal: %s\n", line);
     removeSubstring(line, ".entry");
-    printf("Line after removal: %s\n", line);
-
 
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         /* A warning can be inserted here */
 
@@ -672,15 +645,11 @@ void check_extern_directive_error(char * line, int lineNumber, char * fileName, 
     }
 
     /* print line */
-    printf("Line before removal: %s\n", line);
     removeSubstring(line, ".extern");
-    printf("Line after removal: %s\n", line);
-
 
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         /* A warning can be inserted here */
 
@@ -741,7 +710,6 @@ void temp_instruction_addition(char * line, int lineNumber, char * fileName, Has
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL){
             print_error("Label is already defined\n", originalLine, lineNumber, fileName);
@@ -818,7 +786,6 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
     if(hasLabel(line)){
 
         splitedLine = splitString(line, ":", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
 
         if(ht_search(symbolsLabelsValuesHash, splitedLine[0]) != NULL && strcmp(ht_get_type(symbolsLabelsValuesHash, splitedLine[0]), "instruction") == 0){
             ht_delete(symbolsLabelsValuesHash, splitedLine[0]);
@@ -892,9 +859,6 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 
             operand1AddressingMode = identifyAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
             operand2AddressingMode = identifyAddressingMode(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash);
-
-            printf("operand1AddressingMode: %d\n", operand1AddressingMode);
-            printf("operand2AddressingMode: %d\n", operand2AddressingMode);
 
             freeStringArray(splitedLine, numberOfElements);
 
@@ -1036,10 +1000,7 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
         removeLeadingSpaces(line);
         numberOfElements = 0;
         splitedLine = splitString(line, " ", &numberOfElements);
-        printStringArray(splitedLine, numberOfElements);
         operand1AddressingMode = identifyAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
-
-        printf("operand1AddressingMode: %d\n", operand1AddressingMode);
 
         freeStringArray(splitedLine, numberOfElements);
 
