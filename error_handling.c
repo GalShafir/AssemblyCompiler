@@ -8,6 +8,16 @@
 #include "identification.h"
 #include "error_handling.h"
 
+/** check_errors - Check for syntax errors in the input assembly file.
+ * @param commandType - The type of the command to be checked.
+ * @param line - The input string to be checked.
+ * @param lineNumber - The line number where the error occurred.
+ * @param fileName - The name of the file where the error occurred.
+ * @param symbolsLabelsValuesHash - The hash table to store the symbols-labels values.
+ * @param directiveOrder - The order of the directive in the file.
+ * @param entriesExternsHash - The hash table to store the entries and externs.
+ * @param foundError - A flag to indicate if an error was found.
+ */
 void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, bool * foundError) {
     
     switch (commandType) {
@@ -39,6 +49,7 @@ void check_errors(CommandType commandType, char *line, int lineNumber, char * fi
             break;
     }
 }
+
 
 void check_entries_externs_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *entriesExternsHash, HashTable *symbolsLabelsValuesHash, bool * foundError) {
 

@@ -9,6 +9,14 @@
 #include "error_handling.h"
 #include "analysis.h"
 
+/** Compile
+ *
+ * This function compiles the input assembly file.
+ *
+ * @param fileName - Name of the input assembly file.
+ * @return 0 if the file was compiled successfully, 1 if the file does not exist.
+ */
+ 
 int compile(char * fileName){
 
     FILE *inputFile = NULL;                       /* File pointer for the input file */

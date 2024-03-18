@@ -110,6 +110,7 @@ void build_binary_file(char * inputFileName, HashTable *symbolsLabelsValuesHash,
 
     }
 
+    /* Close the files */
     fclose(inputFile);
     fclose(outputFile);
     fclose(entryFile);
@@ -159,6 +160,8 @@ void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash
     directiveMemorySizeString = intToString(get_directives_memory_size(symbolsLabelsValuesHash));
     instructionMemorySizeString = intToString(currentMemoryAddress - get_directives_memory_size(symbolsLabelsValuesHash) - STARTING_MEMORY_LOCATION);
 
+    /* Write the memory sizes to the output file */
+
     fputs("  ", outputFile);
     fputs(instructionMemorySizeString, outputFile);
     fputs(" ", outputFile);
@@ -166,6 +169,7 @@ void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash
     fputs("\n", outputFile);
 
 
+    /* Free the memory allocated for the memory size strings */
     free(directiveMemorySizeString);
     free(instructionMemorySizeString);
 
@@ -174,18 +178,23 @@ void build_encoded_file(char * inputFileName, HashTable *symbolsLabelsValuesHash
 
         splitedLine = splitString(line, " ", &numberOfElements);
 
+        /* Encode the binary string */
         encodedBinary = encodeBinaryString(splitedLine[1]);
+
+        /* Write the encoded line to the output file */
 
         fputs(splitedLine[0], outputFile);
         fputs(" ", outputFile);
         fputs(encodedBinary, outputFile);
         fputs("\n", outputFile);
 
+        /* Free the memory allocated for the encoded binary string */
         free(encodedBinary);
         freeStringArray(splitedLine, numberOfElements);
 
     }
 
+    /* Close the files */
     fclose(tempFile);
     fclose(outputFile);
 
@@ -260,7 +269,10 @@ void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabe
 
         splitedLine = splitString(line, ":", &numberOfElements);
 
+        /* copy the label name to the labelName variable */
         strcpy(labelName, splitedLine[0]);
+
+        /* copy the value to the value variable */
         strcpy(value, splitedLine[1]);
     }
 
@@ -296,14 +308,20 @@ void calculate_data_directive_memory_address(char * line, HashTable *symbolsLabe
 
     
     if(hasLabel(originalLine)){
+
         directiveOrderString = intToString(*directiveOrder);
         memorySize = numberOfElements;
         memorySizeString = intToString(memorySize);
+
         memoryAddress = *currentMemoryAddress;
         *currentMemoryAddress += memorySize;
+
         memoryAddressString = intToString(memoryAddress);
+
         ht_insert(symbolsLabelsValuesHash, labelName, variableValue, "dataDirective", memoryAddressString, memorySizeString, directiveOrderString);
+
         (*directiveOrder)++;
+
         free(directiveOrderString);
         free(memorySizeString);
         free(memoryAddressString);
@@ -354,8 +372,6 @@ void calculate_string_directive_memory_address(char * line, HashTable *symbolsLa
 
         splitedLine = splitString(line, ":", &numberOfElements);
 
-
-
         strcpy(labelName, splitedLine[0]);
         strcpy(value, splitedLine[1]);
     }
@@ -374,12 +390,17 @@ void calculate_string_directive_memory_address(char * line, HashTable *symbolsLa
         directiveOrderString = intToString(*directiveOrder);
         /* Calculate the string size - both of the quotes + /0 character */
         memorySize = countCharacters(value) - 1;
+
         memorySizeString = intToString(memorySize);
         memoryAddress = *currentMemoryAddress;
+
         *currentMemoryAddress += memorySize;
         memoryAddressString = intToString(memoryAddress);
+
         ht_insert(symbolsLabelsValuesHash, labelName, value, "stringDirective", memoryAddressString, memorySizeString, directiveOrderString);
+
         (*directiveOrder)++;
+
         free(directiveOrderString);
         free(memorySizeString);
         free(memoryAddressString);
@@ -604,10 +625,12 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
 
         strcpy(value, ht_search(symbolsLabelsValuesHash, labelName));
 
+        /* if the label is an entry or an extern, write it to the entry or extern file */
+
         if(ht_search(entriesExternsHash, labelName) != NULL && strcmp(ht_get_type(entriesExternsHash, labelName), "entryDirective") == 0){
             fprintf(entryFile, "%s %04d\n", labelName, stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)));
         }
-
+        
         else if(ht_search(entriesExternsHash, labelName) != NULL && strcmp(ht_get_type(entriesExternsHash, labelName), "externDirective") == 0){
             fprintf(externFile, "%s %04d\n", labelName, stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)));
         }
@@ -622,9 +645,11 @@ void analyze_data_directive(char * line, HashTable *symbolsLabelsValuesHash, Has
         /* Write line to the output file */
         binary = (char *)malloc(14 + 1); /* Allocate memory for the binary string */
         decimalToBinary(stringToInt(splitedLine[i]), 14, binary);
+
         fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + i);
         fputs(binary, outputFile);
         fputs("\n", outputFile);
+
         free(binary);
 
     }
@@ -663,6 +688,7 @@ void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, H
 
         strcpy(value, ht_search(symbolsLabelsValuesHash, labelName));
 
+        /* if the label is an entry or an extern, write it to the entry or extern file */
         if(ht_search(entriesExternsHash, labelName) != NULL && strcmp(ht_get_type(entriesExternsHash, labelName), "entryDirective") == 0){
             fprintf(entryFile, "%s %04d\n", labelName, stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)));
         }
@@ -677,10 +703,13 @@ void analyze_string_directive(char * line, HashTable *symbolsLabelsValuesHash, H
         /* Write line to the output file */
         binary = (char *)malloc(14 + 1); /* Allocate memory for the binary string */
         decimalToBinary((int)(value[i]), 14, binary);
+
         fprintf(outputFile, "%04d ", stringToInt(ht_get_memory_address(symbolsLabelsValuesHash, labelName)) + (i - 1));
         fputs(binary, outputFile);
         fputs("\n", outputFile);
+
         counter++;
+
         free(binary);
 
 
@@ -739,6 +768,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
 
         strcpy(labelName, splitedLine[0]);
 
+        /* if the label is an entry or an extern, write it to the entry or extern file */
         if(ht_search(entriesExternsHash, labelName) != NULL && strcmp(ht_get_type(entriesExternsHash, labelName), "entryDirective") == 0){
             fprintf(entryFile, "%s %04d\n", labelName, *currentMemoryAddress);
         }
@@ -776,6 +806,7 @@ void analyze_instruction(char * line, HashTable *symbolsLabelsValuesHash, HashTa
             numberOfElements = 0;
             splitedLine = splitString(line, ",", &numberOfElements);
 
+            /* Analyze the addressing mode of the operands */
             operand1AddressingMode = analyzeAddressingMode(splitedLine[0], symbolsLabelsValuesHash, entriesExternsHash);
             operand2AddressingMode = analyzeAddressingMode(splitedLine[1], symbolsLabelsValuesHash, entriesExternsHash);
 
