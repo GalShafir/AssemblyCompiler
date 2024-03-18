@@ -56,7 +56,7 @@ int compile(char * fileName){
  
 void processFile(char *inputFileName) {
 
-    char line[MAX_LINE_LENGTH];                                            /* Buffer to store each line from the file */
+    char line[MAX_LINE_LENGTH * 2];                                            /* Buffer to store each line from the file */
     FILE *inputFile = NULL;                                                /* File pointer for the input file */
     CommandType commandType;                                               /* Type of the command in the line */
     int lineNumber = 0;                                                    /* Counter for the line number */
@@ -86,6 +86,11 @@ void processFile(char *inputFileName) {
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         
         lineNumber++;
+
+        if(checkIfLineLengthValid(line, lineNumber, inputFileName) == False) {
+            foundError = True;
+            continue;
+        }
         
         /* Identify the command type */
         commandType = identifyCommandType(line, instructionsHash);

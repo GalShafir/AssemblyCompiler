@@ -9,6 +9,7 @@
 #include "error_handling.h"
 
 void check_errors(CommandType commandType, char *line, int lineNumber, char * fileName, HashTable *symbolsLabelsValuesHash, int * directiveOrder, HashTable *entriesExternsHash, bool * foundError) {
+    
     switch (commandType) {
         case EMPTY:
             break;
@@ -60,7 +61,6 @@ void check_instruction_errors(CommandType commandType, char *line, int lineNumbe
                 check_instruction_error(line, lineNumber, fileName, entriesExternsHash, symbolsLabelsValuesHash, foundError);
                 break;
             case UNDEFINED:
-                print_error("undefined instruction\n", line, lineNumber, fileName);
                 *foundError = True;
                 break;
             default:
@@ -1235,6 +1235,28 @@ bool checkInstructionCommas(const char* line, const char* originalLine, int line
     /* Check if the line ends with a comma */
     if (*(line - 1) == ',') {
         print_error("Instruction ends with a comma.\n", originalLine, lineNumber, fileName);
+        return False;
+    }
+
+    return True;
+}
+
+size_t stringLength(const char *str) {
+    size_t length = 0;
+
+    /* Iterate through the string until reaching the null terminator */
+    while (*str != '\0') {
+        length++;
+        str++;
+    }
+
+    return length;
+}
+
+
+bool checkIfLineLengthValid(char * line, int lineNumber, char * fileName) {
+    if (stringLength(line) > (MAX_LINE_LENGTH - 1)) {
+        print_error("Line length is too long\n", line, lineNumber, fileName);
         return False;
     }
 

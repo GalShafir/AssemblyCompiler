@@ -13,19 +13,19 @@ LOOP:       jmp W
             cmp K, #sz
             ; The next line is an empty comment
 
+
             bne W
+                cmp r3, #sz
+            bne END
 L1: inc L3
 .entry LOOP
             bne LOOP
 END:        hlt
-
+                cmp r3, #sz
+            bne END
 .define len = 4
-
+STR2:        .string "abcdef"
 STR:        .string "abcdef"
 LIST:       .data 6, -9, len
 K:          .data 22
 .extern L3
-
-
-
-

@@ -17,3 +17,5 @@ void check_instruction_error(char * line, int lineNumber, char * fileName, HashT
 bool number_of_operands_is_valid(char *instructionName, char *instructionContent);
 bool checkInstructionCommas(const char* line, const char* originalLine, int lineNumber, char * fileName);
 bool checkCommandExists(char * instruction, const char* originalLine, int lineNumber, char * fileName);
+size_t stringLength(const char *str);
+bool checkIfLineLengthValid(char * line, int lineNumber, char * fileName);
