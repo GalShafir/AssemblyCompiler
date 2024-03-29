@@ -64,7 +64,7 @@ int compile(char * fileName){
  
 void processFile(char *inputFileName) {
 
-    char line[MAX_LINE_LENGTH * 2];                                            /* Buffer to store each line from the file */
+    char line[MAX_LINE_LENGTH * 2];                                        /* Buffer to store each line from the file */
     FILE *inputFile = NULL;                                                /* File pointer for the input file */
     CommandType commandType;                                               /* Type of the command in the line */
     int lineNumber = 0;                                                    /* Counter for the line number */
@@ -155,6 +155,7 @@ void processFile(char *inputFileName) {
         free_table(instructionsHash);
         free_table(symbolsLabelsValuesHash);
         free_table(entriesExternsHash);
+        free_table(registersHash);
         fclose(inputFile);
         printf("Errors found in file %s. Compilation aborted.\n", inputFileName);
         return;
@@ -231,22 +232,22 @@ void processFile(char *inputFileName) {
 
 void createInstructionTable(HashTable* mp){
 
-    ht_insert(mp, "mov", "0000",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "cmp", "0001",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "add", "0010",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "sub", "0011",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "not", "0100",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "clr", "0101",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "lea", "0110",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "inc", "0111",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "dec", "1000",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "jmp", "1001",  "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "bne", "1010", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "red", "1011", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "prn", "1100", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "jsr", "1101", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "rts", "1110", "instruction", "no address", "no size", "no order");
-    ht_insert(mp, "hlt", "1111", "instruction", "no address", "no size", "no order");
+    ht_insert(mp, "mov", "0000",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "cmp", "0001",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "add", "0010",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "sub", "0011",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "not", "0100",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "clr", "0101",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "lea", "0110",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "inc", "0111",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "dec", "1000",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "jmp", "1001",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "bne", "1010",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "red", "1011",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "prn", "1100",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "jsr", "1101",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "rts", "1110",  "instruction", "NULL", "NULL", "NULL");
+    ht_insert(mp, "hlt", "1111",  "instruction", "NULL", "NULL", "NULL");
 }
 
 /** Create the Registers Table
@@ -258,14 +259,14 @@ void createInstructionTable(HashTable* mp){
 
 void createRegistersTable(HashTable* mp){
 
-    ht_insert(mp, "r0", "000",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r1", "001",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r2", "010",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r3", "011",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r4", "100",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r5", "101",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r6", "110",  "register", "no address", "no size", "no order");
-    ht_insert(mp, "r7", "111",  "register", "no address", "no size", "no order");
+    ht_insert(mp, "r0", "000",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r1", "001",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r2", "010",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r3", "011",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r4", "100",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r5", "101",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r6", "110",  "register", "NULL", "NULL", "NULL");
+    ht_insert(mp, "r7", "111",  "register", "NULL", "NULL", "NULL");
 }
 
 /** print directives by order
