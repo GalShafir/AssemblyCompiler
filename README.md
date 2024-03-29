@@ -135,6 +135,6 @@ The assembler can also recognize errors in the input file.
 Errors can look like:
 
 
-![screenshot](Examples/ErrorExamples/errorsProgram_1.png)
+![screenshot](Examples/ErrorDetectionExamples/errorsProgram_1.png)
 
 
